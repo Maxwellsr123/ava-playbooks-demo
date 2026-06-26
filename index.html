@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+<title>Ava Playbooks — MVP</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.31.0/dist/tabler-icons.min.css" />
+<style>
+  :root{
+    --bg0:#fff; --bg1:#f0eee6; --info-bg:#e6f1fb; --warn-bg:#faeeda; --purple-bg:#eeedfe; --coral-bg:#faece7; --green-bg:#e1f5ee; --danger-bg:#fcebeb;
+    --t0:#1a1a18; --t1:#57564f; --t2:#8a897f; --info:#0c447c; --warn:#633806; --purple:#534ab7; --coral:#993c1d; --green:#0f6e56; --danger:#a32d2d;
+    --bd:rgba(0,0,0,0.10); --bd2:rgba(0,0,0,0.18); --font:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  body{margin:0;background:var(--bg1);font-family:var(--font);color:var(--t0);display:flex;justify-content:center;min-height:100vh;}
+  .phone{width:100%;max-width:420px;background:var(--bg0);min-height:100vh;display:flex;flex-direction:column;position:relative;box-shadow:0 0 0 1px var(--bd);}
+  @media(min-width:480px){.phone{margin:18px 0;min-height:auto;border-radius:26px;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,.12);}body{align-items:flex-start;}}
+  .statusbar{display:flex;justify-content:space-between;padding:8px 18px 4px;font-size:11px;color:var(--t2);}
+  .top{background:var(--info-bg);padding:11px 16px;display:flex;align-items:center;gap:8px;}
+  .body{flex:1;}
+  .pad{padding:14px 16px;}
+  .scr{display:none;} .scr.on{display:block;}
+  .h{font-size:17px;font-weight:600;} .h2{font-size:15px;font-weight:600;}
+  .lbl{font-size:12px;font-weight:600;color:var(--t1);margin:0 0 8px;}
+  .card{background:var(--bg0);border:1px solid var(--bd);border-radius:10px;}
+  .btn{font-size:13px;padding:7px 12px;border:1px solid var(--bd2);background:transparent;color:var(--t0);border-radius:8px;cursor:pointer;font-family:var(--font);}
+  .btn:active{transform:scale(.98);} .btn.pri{background:var(--info);color:#fff;border-color:var(--info);} .btn.sm{font-size:12px;padding:5px 10px;} .btn.full{width:100%;}
+  .chip{font-size:11px;padding:3px 9px;border-radius:9px;background:var(--bg1);}
+  input.in{width:100%;height:40px;border:1px solid var(--bd2);border-radius:8px;padding:0 12px;font-size:14px;font-family:var(--font);}
+  .who{display:inline-flex;align-items:center;gap:3px;font-size:10px;padding:2px 7px;border-radius:9px;white-space:nowrap;}
+  .who.ava{background:var(--green-bg);color:var(--green);} .who.you{background:var(--info-bg);color:var(--info);}
+  .who.crew{background:var(--bg1);color:#444441;} .who.looper{background:var(--purple-bg);color:var(--purple);} .who.browser{background:var(--coral-bg);color:var(--coral);}
+  .pick{display:inline-flex;align-items:center;gap:4px;font-size:12px;padding:6px 11px;border-radius:14px;border:1px solid var(--bd2);cursor:pointer;color:var(--t1);white-space:nowrap;}
+  .pick.sel{background:var(--t0);color:#fff;border-color:var(--t0);}
+  .alert{position:fixed;left:50%;bottom:30px;transform:translateX(-50%) translateY(20px);opacity:0;background:var(--t0);color:#fff;font-size:13px;padding:9px 16px;border-radius:20px;max-width:340px;transition:.25s;pointer-events:none;z-index:50;text-align:center;}
+  .alert.show{opacity:1;transform:translateX(-50%) translateY(0);}
+  .spin{display:inline-block;animation:spin 1s linear infinite;} @keyframes spin{to{transform:rotate(360deg);}}
+</style>
+</head>
+<body>
+<div class="phone">
+  <div class="statusbar"><span>9:41</span><span><i class="ti ti-wifi"></i> <i class="ti ti-battery-3"></i></span></div>
+  <div class="top"><i class="ti ti-robot" style="font-size:18px;color:var(--info)"></i><span style="font-weight:600;color:var(--info)">Ava Playbooks</span><span style="font-size:11px;color:var(--info);margin-left:auto">KPA Plumbing</span></div>
+
+  <div class="body">
+
+    <!-- LIST -->
+    <div class="scr on" id="list">
+      <div class="pad">
+        <div class="card pri" style="background:var(--info-bg);border:none;padding:14px;cursor:pointer;border-radius:12px;margin-bottom:18px" onclick="startNew()">
+          <div style="display:flex;align-items:center;gap:11px"><i class="ti ti-wand" style="font-size:24px;color:var(--info)"></i><div style="flex:1"><div style="font-size:15px;font-weight:600;color:var(--info)">Design a new playbook</div><div style="font-size:12px;color:var(--info)">Tell us what you want off your plate — we build it for you.</div></div><i class="ti ti-chevron-right" style="color:var(--info)"></i></div>
+        </div>
+
+        <p class="lbl">Your playbooks</p>
+        <div id="mine"></div>
+
+        <p class="lbl" style="margin-top:20px">Live now — or start from these</p>
+        <div id="examples"></div>
+      </div>
+    </div>
+
+    <!-- DESCRIBE -->
+    <div class="scr" id="describe">
+      <div class="pad" style="display:flex;align-items:center;gap:8px"><i class="ti ti-chevron-left" style="font-size:20px;cursor:pointer;color:var(--t1)" onclick="show('list')"></i><div><span class="h">Design a playbook</span><div style="font-size:12px;color:var(--t2)">Tell Ava what you want off your plate</div></div></div>
+      <div class="pad" style="padding-top:0">
+        <textarea id="desc" placeholder="e.g. Chase customers who haven't paid after two weeks, and call them if they still don't pay" style="width:100%;min-height:104px;border:1px solid var(--bd2);border-radius:8px;padding:10px 12px;font-size:14px;font-family:var(--font);resize:vertical"></textarea>
+        <div style="margin:10px 0 0">
+          <div style="font-size:11px;color:var(--t2);margin-bottom:6px">Need a nudge?</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <span class="chip" style="cursor:pointer" onclick="document.getElementById('desc').value='Chase customers who haven\'t paid after two weeks'">Chase unpaid invoices</span>
+            <span class="chip" style="cursor:pointer" onclick="document.getElementById('desc').value='Follow up any quote that hasn\'t been accepted in 5 days'">Follow up quotes</span>
+            <span class="chip" style="cursor:pointer" onclick="document.getElementById('desc').value='Handle new job enquiries that come in by email'">New enquiries</span>
+          </div>
+        </div>
+        <button id="draftbtn" class="btn pri full" style="padding:11px 0;margin-top:18px" onclick="draftFromDescription()"><i class="ti ti-robot" style="font-size:14px"></i> Ava, draft it for me</button>
+        <div style="font-size:12px;color:var(--t2);text-align:center;margin-top:12px">or <span style="color:var(--info);cursor:pointer" onclick="show('name')">build it from scratch</span></div>
+      </div>
+    </div>
+
+    <!-- NAME -->
+    <div class="scr" id="name">
+      <div class="pad" style="display:flex;align-items:center;gap:8px"><i class="ti ti-chevron-left" style="font-size:20px;cursor:pointer;color:var(--t1)" onclick="show('list')"></i><span class="h">New playbook</span></div>
+      <div class="pad" style="padding-top:0">
+        <p class="lbl">What should we call it?</p>
+        <input id="pbname" class="in" placeholder="e.g. Chase unpaid invoices" />
+        <p class="lbl" style="margin-top:16px">When should it run?</p>
+        <input id="pbtrig" class="in" placeholder="e.g. Every Monday morning" />
+        <div style="font-size:11px;color:var(--t2);margin-top:8px"><i class="ti ti-bulb"></i> Not sure? Just give it a name — you can shape the rest with Ava next.</div>
+        <button class="btn pri full" style="padding:11px 0;margin-top:18px" onclick="createPb()">Start building <i class="ti ti-arrow-right" style="font-size:13px"></i></button>
+      </div>
+    </div>
+
+    <!-- BUILDER -->
+    <div class="scr" id="builder">
+      <div class="pad" style="display:flex;align-items:center;gap:8px"><i class="ti ti-chevron-left" style="font-size:20px;cursor:pointer;color:var(--t1)" onclick="show('list')"></i><div style="flex:1"><span class="h" id="btitle">Playbook</span><div style="font-size:12px;color:var(--t2)">Add, reorder or edit the steps</div></div></div>
+      <div class="pad" style="padding-top:0">
+        <div class="card" style="padding:10px 12px;margin-bottom:12px;display:flex;align-items:center;gap:9px;cursor:pointer" onclick="editTrigger()"><i class="ti ti-clock" style="color:var(--t1)"></i><div style="flex:1;font-size:13px" id="btrig">When…</div><i class="ti ti-pencil" style="color:var(--t2);font-size:14px"></i></div>
+        <div id="bsteps"></div>
+        <button class="btn full" style="padding:9px 0;margin-top:4px" onclick="addStepBtn()"><i class="ti ti-plus" style="font-size:13px"></i> Add a step</button>
+        <input id="reqwho" class="in" placeholder="Your name or business (optional)" style="margin-top:14px" />
+        <button class="btn pri full" style="padding:11px 0;margin-top:8px" onclick="requestPb()"><i class="ti ti-send" style="font-size:14px"></i> Request this automation</button>
+        <div style="font-size:11px;color:var(--t2);text-align:center;margin-top:8px">Lands in your app, and we get pinged in Slack. We build it for you.</div>
+      </div>
+    </div>
+
+    <!-- ADD/EDIT STEP -->
+    <div class="scr" id="addstep">
+      <div class="pad" style="display:flex;align-items:center;gap:8px"><i class="ti ti-chevron-left" style="font-size:20px;cursor:pointer;color:var(--t1)" onclick="show('builder')"></i><div><span class="h">A step</span><div style="font-size:12px;color:var(--t2)">Describe it, then say who runs it</div></div></div>
+      <div class="pad" style="padding-top:0">
+        <p class="lbl">The step</p>
+        <input id="stepin" class="in" placeholder="e.g. Send the customer a friendly reminder" />
+        <div style="margin:10px 0 0">
+          <div style="font-size:11px;color:var(--t2);margin-bottom:6px"><i class="ti ti-wand"></i> Or let Ava suggest:</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <span class="chip" style="cursor:pointer" onclick="suggest('Send the customer a reminder the day before','ava')">Reminder before</span>
+            <span class="chip" style="cursor:pointer" onclick="suggest('Ask the crew for before &amp; after photos','crew')">Photos from crew</span>
+            <span class="chip" style="cursor:pointer" onclick="suggest('File the signed quote in the customer folder','browser')">File the quote</span>
+          </div>
+        </div>
+        <p class="lbl" style="margin-top:16px">Who runs it? <span style="font-weight:400;color:var(--t2)">· tap to choose</span></p>
+        <div id="whosel" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">
+          <span class="pick" data-k="ava" onclick="pickWho('ava')"><i class="ti ti-robot"></i> Ava</span>
+          <span class="pick" data-k="you" onclick="pickWho('you')"><i class="ti ti-user"></i> You</span>
+          <span class="pick" data-k="crew" onclick="pickWho('crew')"><i class="ti ti-tool"></i> Crew</span>
+          <span class="pick" data-k="looper" onclick="pickWho('looper')"><i class="ti ti-headset"></i> Looper</span>
+          <span class="pick" data-k="browser" onclick="pickWho('browser')"><i class="ti ti-browser"></i> Browser</span>
+        </div>
+        <div id="whonote" style="font-size:11px;color:var(--t1);background:var(--bg1);border-radius:8px;padding:9px 11px;margin-bottom:14px"></div>
+        <button class="btn pri full" id="savebtn" style="padding:9px 0" onclick="saveStep()">Add step</button>
+      </div>
+    </div>
+
+    <!-- EXAMPLE VIEW -->
+    <div class="scr" id="exview">
+      <div class="pad" style="display:flex;align-items:center;gap:8px"><i class="ti ti-chevron-left" style="font-size:20px;cursor:pointer;color:var(--t1)" onclick="show('list')"></i><div style="flex:1"><span class="h" id="extitle">Example</span><div style="font-size:12px;color:var(--t2)" id="exsub"></div></div></div>
+      <div class="pad" style="padding-top:0">
+        <div id="exbody"></div>
+        <button class="btn pri full" style="padding:11px 0;margin-top:10px" onclick="startFromExample()"><i class="ti ti-copy" style="font-size:14px"></i> Start from this</button>
+      </div>
+    </div>
+
+    <!-- DONE -->
+    <div class="scr" id="done">
+      <div class="pad" style="text-align:center;padding-top:30px">
+        <div style="width:60px;height:60px;border-radius:50%;background:var(--green-bg);display:flex;align-items:center;justify-content:center;margin:0 auto 14px"><i class="ti ti-check" style="font-size:30px;color:var(--green)"></i></div>
+        <div class="h">Requested</div>
+        <div style="font-size:13px;color:var(--t1);margin-top:6px" id="donename">We've got your playbook.</div>
+        <div class="card" style="text-align:left;padding:12px;margin:18px 0">
+          <div style="display:flex;align-items:center;gap:9px;padding:6px 0"><i class="ti ti-device-mobile" style="color:var(--green)"></i><div style="font-size:13px;flex:1">Saved in your app <span style="color:var(--t2)">· your source of truth</span></div></div>
+          <div style="display:flex;align-items:center;gap:9px;padding:6px 0;border-top:1px solid var(--bd)"><i class="ti ti-brand-slack" style="color:var(--green)"></i><div style="font-size:13px;flex:1">We've been pinged in Slack</div></div>
+          <div style="display:flex;align-items:center;gap:9px;padding:6px 0;border-top:1px solid var(--bd)"><i class="ti ti-tools" style="color:var(--info)"></i><div style="font-size:13px;flex:1">Ava and our team build it, then turn it on</div></div>
+        </div>
+        <button class="btn full" style="padding:11px 0" onclick="show('list')">Back to playbooks</button>
+      </div>
+    </div>
+
+  </div>
+  <div class="alert" id="alert"></div>
+</div>
+
+<script>
+  var WHO={
+    ava:{short:'Ava',icon:'ti-robot',note:'Ava runs this automatically (if she has the tools).'},
+    you:{short:'You',icon:'ti-user',note:'You\'ll get a card to action it yourself.'},
+    crew:{short:'Crew',icon:'ti-tool',note:'Assigned to whoever\'s on the job, in Slack.'},
+    looper:{short:'Looper',icon:'ti-headset',note:'One of our people does it for you.'},
+    browser:{short:'Browser',icon:'ti-browser',note:'Ava drives the software on screen where there\'s no API.'}
+  };
+  var SRC={gmail:{label:'Gmail',icon:'ti-mail'},slack:{label:'Slack',icon:'ti-brand-slack'},fergus:{label:'Fergus',icon:'ti-briefcase'},xero:{label:'Xero',icon:'ti-businessplan'}};
+  var AUTO={api:{label:'API ✓',c:'var(--green)',bg:'var(--green-bg)'},browser:{label:'Browser',c:'var(--coral)',bg:'var(--coral-bg)'},manual:{label:'Backfill',c:'var(--purple)',bg:'var(--purple-bg)'}};
+  function srcAutoRow(s){
+    var sys=s.systems||[];
+    if(!sys.length&&!s.auto)return '';
+    var h='<div style="display:flex;align-items:center;gap:6px;margin-top:7px;flex-wrap:wrap">';
+    sys.forEach(function(k){if(SRC[k])h+='<span class="chip" style="display:inline-flex;align-items:center;gap:3px"><i class="ti '+SRC[k].icon+'" style="font-size:11px"></i> '+SRC[k].label+'</span>';});
+    if(AUTO[s.auto])h+='<span class="chip" style="background:'+AUTO[s.auto].bg+';color:'+AUTO[s.auto].c+'">'+AUTO[s.auto].label+'</span>';
+    if(s.note)h+='<span style="font-size:10px;color:var(--t2);flex:1;text-align:right;min-width:90px">'+esc(s.note)+'</span>';
+    return h+'</div>';
+  }
+  var examples=[
+    {name:'Spotted jobs',status:'pilot',trig:'When a new email lands in your inbox',sub:'Finds jobs in your email, books from Slack',steps:[
+      {kind:'condition',text:'Looks like a real job?',who:'ava',no:'leave it',systems:['gmail'],auto:'api',note:'reads Gmail'},
+      {kind:'action',text:'Post to Slack: "want me to book it?"',who:'ava',systems:['slack'],auto:'api',note:'Slack API'},
+      {kind:'condition',text:'You reply yes?',who:'you',no:'drop it',systems:['slack'],auto:'manual',note:'your call'},
+      {kind:'action',text:'Book the job + email the customer',who:'ava',systems:['fergus','gmail'],auto:'api',note:'Fergus jobs API + Gmail'}]},
+    {name:'Spend hunter',status:'live',trig:'Every weekday 7:30am, scan the last 3 days',sub:'Bills & receipts collected each morning',steps:[
+      {kind:'condition',text:'A bill, receipt or remittance PDF?',who:'ava',no:'skip',systems:['gmail'],auto:'api',note:'reads Gmail'},
+      {kind:'condition',text:'New — not collected before?',who:'ava',no:'skip',systems:[],auto:'api',note:'internal check'},
+      {kind:'action',text:'Drop it in your chat to pay or file',who:'ava',systems:['slack'],auto:'api',note:'Slack API'}]},
+    {name:'Weekly invoicing',status:'pilot',trig:'Every weekday morning, check your jobs',sub:'Drafts finished jobs, you approve',steps:[
+      {kind:'condition',text:'Done, not invoiced, quiet 2+ days?',who:'ava',no:'wait',systems:['fergus'],auto:'api',note:'Fergus job data'},
+      {kind:'action',text:'Draft it from your usual pricing',who:'ava',systems:['fergus'],auto:'api',note:'from learned pricing'},
+      {kind:'action',text:'Ask the crew: finished? materials? credits?',who:'crew',systems:['slack'],auto:'api',note:'Ava asks in Slack'},
+      {kind:'action',text:'Chase the crew if no reply in a day',who:'looper',systems:['slack'],auto:'manual',note:'Looper chases'},
+      {kind:'condition',text:'You approve the batch?',who:'you',no:'park & recheck',systems:['slack'],auto:'manual',note:'you approve in Slack'},
+      {kind:'action',text:'Raise it in Fergus',who:'browser',systems:['fergus'],auto:'browser',note:'Fergus has no invoice API'}]}
+  ];
+  var mine=[]; var cur=-1; var exIdx=-1; var stepMode='add'; var stepIdx=-1; var chosenWho='ava';
+  function esc(s){return (s||'').replace(/[&<>"]/g,function(c){return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c];});}
+  function show(id){document.querySelectorAll('.scr').forEach(function(s){s.classList.toggle('on',s.id===id);});window.scrollTo(0,0);}
+  var tmr;function say(m){var a=document.getElementById('alert');a.textContent=m;a.classList.add('show');clearTimeout(tmr);tmr=setTimeout(function(){a.classList.remove('show');},2200);}
+
+  function statusChip(st){if(st==='live')return '<span class="who ava"><i class="ti ti-circle-filled" style="font-size:8px"></i> live</span>';if(st==='requested')return '<span class="chip" style="background:var(--warn-bg);color:var(--warn)">requested</span>';if(st==='pilot')return '<span class="chip" style="background:var(--warn-bg);color:var(--warn)">pilot</span>';return '<span class="chip">draft</span>';}
+
+  function renderList(){
+    var m=document.getElementById('mine');
+    if(!mine.length){m.innerHTML='<div style="font-size:12px;color:var(--t2);padding:8px 2px">Nothing yet — design your first one above.</div>';}
+    else{m.innerHTML=mine.map(function(p,i){return '<div class="card" style="padding:11px 12px;margin-bottom:8px;display:flex;align-items:center;gap:10px;cursor:pointer" onclick="openMine('+i+')"><i class="ti ti-list-check" style="color:var(--t1)"></i><div style="flex:1"><div style="font-size:14px">'+esc(p.name)+'</div><div style="font-size:11px;color:var(--t2)">'+p.steps.length+' steps · '+esc(p.trig||'no trigger yet')+'</div></div>'+statusChip(p.status)+'<i class="ti ti-chevron-right" style="color:var(--t2)"></i></div>';}).join('');}
+    document.getElementById('examples').innerHTML=examples.map(function(e,i){return '<div class="card" style="padding:11px 12px;margin-bottom:8px;display:flex;align-items:center;gap:10px;cursor:pointer" onclick="openExample('+i+')"><i class="ti ti-bolt" style="color:var(--t1)"></i><div style="flex:1"><div style="font-size:14px">'+esc(e.name)+'</div><div style="font-size:11px;color:var(--t2)">'+esc(e.sub)+'</div></div>'+statusChip(e.status)+'<i class="ti ti-chevron-right" style="color:var(--t2)"></i></div>';}).join('');
+  }
+
+  function startNew(){document.getElementById('desc').value='';show('describe');}
+  function firstCap(s){s=s.trim();return s.charAt(0).toUpperCase()+s.slice(1);}
+  function avaDraft(d){var x=d.toLowerCase();
+    if(/invoice|paid|pay|owe|overdue|chase|debt/.test(x))return {name:'Chase unpaid invoices',trig:'a customer goes 2 weeks overdue',status:'draft',steps:[{kind:'action',text:'Check Xero each morning for overdue invoices',who:'ava'},{kind:'action',text:'Send the customer a friendly reminder',who:'ava'},{kind:'action',text:'If still unpaid after a week, flag it to you',who:'you'},{kind:'action',text:'Call them if it hits 3 weeks overdue',who:'looper'}]};
+    if(/quote|estimate|follow/.test(x))return {name:'Follow up quotes',trig:'a quote isn\'t accepted in 5 days',status:'draft',steps:[{kind:'action',text:'Spot quotes with no reply after 5 days',who:'ava'},{kind:'action',text:'Send a friendly follow-up email',who:'ava'},{kind:'action',text:'If still quiet, give them a call',who:'looper'}]};
+    if(/enquir|inquiry|booking|book|job|lead/.test(x))return {name:'Handle new job enquiries',trig:'a new enquiry comes in by email',status:'draft',steps:[{kind:'action',text:'Read the email and pull out the job details',who:'ava'},{kind:'action',text:'Ask you in Slack: book it?',who:'ava'},{kind:'action',text:'Book the job and confirm with the customer',who:'ava'}]};
+    if(/photo|site|compliance|sssp|safety/.test(x))return {name:'Collect site photos',trig:'a job is marked complete',status:'draft',steps:[{kind:'action',text:'Ask the crew for before & after photos',who:'crew'},{kind:'action',text:'File them in the customer folder',who:'browser'},{kind:'action',text:'Chase the crew if none arrive by end of day',who:'looper'}]};
+    var nm=d.length>32?firstCap(d).slice(0,30)+'…':firstCap(d);
+    return {name:nm,trig:'',status:'draft',steps:[{kind:'action',text:'Watch for when this should happen',who:'ava'},{kind:'action',text:'Do the routine part automatically',who:'ava'},{kind:'action',text:'Hand the tricky bits to a person',who:'looper'}]};}
+  var DRAFT_ENDPOINT='https://somgalhkmptkclgvxhca.supabase.co/functions/v1/playbook-draft';
+  function openDraft(p){mine.push(p);cur=mine.length-1;renderBuilder();show('builder');}
+  async function draftFromDescription(){
+    var d=(document.getElementById('desc').value||'').trim();
+    if(!d){say('Tell Ava what you want first');return;}
+    var btn=document.getElementById('draftbtn');var old=btn.innerHTML;
+    btn.disabled=true;btn.innerHTML='<i class="ti ti-loader-2 spin"></i> Ava is drafting…';
+    try{
+      var r=await fetch(DRAFT_ENDPOINT,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({description:d})});
+      if(!r.ok)throw new Error('http '+r.status);
+      var j=await r.json();
+      if(!j.playbook||!j.playbook.steps)throw new Error('no playbook');
+      var pb=j.playbook;
+      var steps=pb.steps.map(function(s){return {kind:'action',text:s.text,who:(WHO[s.owner]?s.owner:'ava'),systems:(Array.isArray(s.systems)?s.systems:[]),auto:s.automation,note:s.note};});
+      openDraft({name:pb.name||firstCap(d),trig:pb.trigger||'',status:'draft',steps:steps});
+      say('Ava drafted it — tweak anything, then request');
+    }catch(e){
+      openDraft(avaDraft(d));
+      say('Offline — used a quick draft');
+    }finally{ btn.disabled=false;btn.innerHTML=old; }
+  }
+  function createPb(){var n=(document.getElementById('pbname').value||'').trim();if(!n){say('Give it a name first');return;}var t=(document.getElementById('pbtrig').value||'').trim();mine.push({name:n,trig:t,steps:[],status:'draft'});cur=mine.length-1;renderBuilder();show('builder');}
+  function openMine(i){cur=i;renderBuilder();show('builder');}
+  function editTrigger(){var p=mine[cur];var v=window.prompt('When should it run?',p.trig||'');if(v!==null){p.trig=v.trim();renderBuilder();}}
+
+  function renderBuilder(){
+    var p=mine[cur];
+    document.getElementById('btitle').textContent=p.name;
+    document.getElementById('btrig').textContent=p.trig?('When '+p.trig.replace(/^when\s+/i,'')):'Tap to set when it runs';
+    var n=p.steps.length,h='';
+    var used={},gaps=0;
+    p.steps.forEach(function(s){(s.systems||[]).forEach(function(k){if(SRC[k])used[k]=1;});if(s.auto==='browser'||s.auto==='manual')gaps++;});
+    var uk=Object.keys(used);
+    if(uk.length||gaps){
+      h+='<div class="card" style="padding:10px 12px;margin-bottom:10px;background:var(--bg1);border:none">'
+        +'<div style="font-size:11px;font-weight:600;color:var(--t1);margin-bottom:6px">Where the work happens</div>'
+        +'<div style="display:flex;gap:6px;flex-wrap:wrap">'
+        +uk.map(function(k){return '<span class="chip" style="display:inline-flex;align-items:center;gap:3px"><i class="ti '+SRC[k].icon+'" style="font-size:11px"></i> '+SRC[k].label+'</span>';}).join('')
+        +(gaps?'<span class="chip" style="background:var(--coral-bg);color:var(--coral)"><i class="ti ti-alert-triangle" style="font-size:11px"></i> '+gaps+' step'+(gaps>1?'s':'')+' need backfill (no API)</span>':'<span class="chip" style="background:var(--green-bg);color:var(--green)">fully automatable</span>')
+        +'</div></div>';
+    }
+    if(!n){h+='<div style="font-size:12px;color:var(--t2);text-align:center;padding:14px">No steps yet — add one below, or let Ava suggest.</div>';}
+    p.steps.forEach(function(s,i){var w=WHO[s.who];
+      h+='<div class="card" style="padding:10px 12px;margin-bottom:6px">'
+        +'<div style="display:flex;align-items:center;gap:9px"><span style="font-size:11px;color:var(--t2);width:16px">'+(i+1)+'</span><div style="flex:1;font-size:13px;cursor:pointer" onclick="editStepBtn('+i+')">'+esc(s.text)+'</div><span class="who '+s.who+'"><i class="ti '+w.icon+'"></i> '+w.short+'</span></div>'
+        +srcAutoRow(s)
+        +'<div style="display:flex;justify-content:flex-end;gap:16px;margin-top:8px;padding-top:8px;border-top:1px solid var(--bd)">'
+        +'<i class="ti ti-arrow-up" style="font-size:15px;cursor:pointer;color:'+(i===0?'var(--bd2)':'var(--t1)')+'" onclick="moveStep('+i+',-1)"></i>'
+        +'<i class="ti ti-arrow-down" style="font-size:15px;cursor:pointer;color:'+(i===n-1?'var(--bd2)':'var(--t1)')+'" onclick="moveStep('+i+',1)"></i>'
+        +'<i class="ti ti-pencil" style="font-size:15px;cursor:pointer;color:var(--t1)" onclick="editStepBtn('+i+')"></i>'
+        +'<i class="ti ti-trash" style="font-size:15px;cursor:pointer;color:var(--danger)" onclick="delStep('+i+')"></i>'
+        +'</div></div>';
+    });
+    document.getElementById('bsteps').innerHTML=h;
+  }
+  function moveStep(i,d){var a=mine[cur].steps,j=i+d;if(j<0||j>=a.length)return;var t=a[i];a[i]=a[j];a[j]=t;renderBuilder();}
+  function delStep(i){mine[cur].steps.splice(i,1);renderBuilder();}
+
+  function addStepBtn(){stepMode='add';stepIdx=-1;document.getElementById('stepin').value='';pickWho('ava');document.getElementById('savebtn').textContent='Add step';show('addstep');}
+  function editStepBtn(i){stepMode='edit';stepIdx=i;var s=mine[cur].steps[i];document.getElementById('stepin').value=s.text;pickWho(s.who);document.getElementById('savebtn').textContent='Save step';show('addstep');}
+  function suggest(t,who){document.getElementById('stepin').value=t;pickWho(who);}
+  function pickWho(k){chosenWho=k;document.querySelectorAll('#whosel .pick').forEach(function(p){p.classList.toggle('sel',p.getAttribute('data-k')===k);});document.getElementById('whonote').textContent=WHO[k].note;}
+  function saveStep(){var t=(document.getElementById('stepin').value||'').trim();if(!t){say('Type the step first');return;}var a=mine[cur].steps;if(stepMode==='edit'){a[stepIdx]={kind:'action',text:t,who:chosenWho};}else{a.push({kind:'action',text:t,who:chosenWho});}renderBuilder();show('builder');}
+
+  function openExample(i){exIdx=i;var e=examples[i];document.getElementById('extitle').textContent=e.name;document.getElementById('exsub').textContent=e.sub;
+    var h='<div class="card" style="padding:10px 12px;margin-bottom:6px;display:flex;align-items:center;gap:9px"><i class="ti ti-clock" style="color:var(--t1)"></i><div style="flex:1;font-size:13px">'+esc(e.trig)+'</div></div>';
+    e.steps.forEach(function(s){var w=WHO[s.who];
+      h+='<div class="card" style="padding:10px 12px;margin-bottom:6px"><div style="display:flex;align-items:center;gap:9px"><i class="ti '+(s.kind==='condition'?'ti-help-circle':'ti-arrow-right')+'" style="color:var(--t2);font-size:15px"></i><div style="flex:1;font-size:13px">'+esc(s.text)+'</div><span class="who '+s.who+'"><i class="ti '+w.icon+'"></i> '+w.short+'</span></div>';
+      if(s.kind==='condition'){h+='<div style="display:flex;gap:8px;margin-top:8px"><div style="flex:1;font-size:11px;background:var(--bg1);border-radius:7px;padding:5px 8px"><b>No</b> → '+esc(s.no)+'</div><div style="flex:1;font-size:11px;background:var(--bg1);border-radius:7px;padding:5px 8px;text-align:center">Yes ↓</div></div>';}
+      h+=srcAutoRow(s);
+      h+='</div>';});
+    document.getElementById('exbody').innerHTML=h;show('exview');}
+  function startFromExample(){var e=examples[exIdx];mine.push({name:e.name+' (mine)',trig:e.trig.replace(/^when\s+/i,''),status:'draft',steps:e.steps.map(function(s){return {kind:'action',text:s.text,who:s.who,systems:s.systems,auto:s.auto,note:s.note};})});cur=mine.length-1;renderBuilder();show('builder');say('Copied — now make it yours');}
+
+  var REQUEST_ENDPOINT='https://somgalhkmptkclgvxhca.supabase.co/functions/v1/playbook-request';
+  async function requestPb(){
+    var p=mine[cur];
+    if(!p.steps.length){say('Add at least one step first');return;}
+    var who=(document.getElementById('reqwho').value||'').trim();
+    p.status='requested';
+    document.getElementById('donename').textContent='"'+p.name+'" — '+p.steps.length+' steps. We\'ll build it for you.';
+    renderList();
+    try{
+      await fetch(REQUEST_ENDPOINT,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({name:p.name,trigger:p.trig,steps:p.steps,company:(who||'shared demo'),description:(p.desc||'')})});
+    }catch(e){}
+    document.getElementById('reqwho').value='';
+    show('done');
+  }
+
+  renderList();pickWho('ava');
+</script>
+</body>
+</html>
