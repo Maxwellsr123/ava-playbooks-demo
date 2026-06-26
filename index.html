@@ -55,7 +55,10 @@
         <p class="lbl">Your playbooks</p>
         <div id="mine"></div>
 
-        <p class="lbl" style="margin-top:20px">Live now — or start from these</p>
+        <div style="margin-top:22px;background:var(--green-bg);border-radius:10px;padding:11px 13px;margin-bottom:11px;display:flex;align-items:center;gap:9px">
+          <i class="ti ti-bolt" style="font-size:20px;color:var(--green)"></i>
+          <div style="flex:1"><div style="font-size:13px;font-weight:600;color:var(--green)">Live with Elastic AI right now</div><div style="font-size:11px;color:var(--t1)">Use any of these today — or design your own above and we'll build on them.</div></div>
+        </div>
         <div id="examples"></div>
       </div>
     </div>
@@ -248,7 +251,7 @@
     return h+'</div>';
   }
   var examples=[
-    {name:'Spotted jobs',status:'pilot',trig:'When a new email lands in your inbox',sub:'Finds jobs in your email, books from Slack',steps:[
+    {name:'Spotted jobs',status:'live',trig:'When a new email lands in your inbox',sub:'Finds jobs in your email, books from Slack',steps:[
       {kind:'condition',text:'Looks like a real job?',who:'ava',no:'leave it',systems:['gmail'],auto:'api',note:'reads Gmail'},
       {kind:'action',text:'Post to Slack: "want me to book it?"',who:'ava',systems:['slack'],auto:'api',note:'Slack API'},
       {kind:'condition',text:'You reply yes?',who:'you',no:'drop it',systems:['slack'],auto:'manual',note:'your call'},
@@ -257,7 +260,7 @@
       {kind:'condition',text:'A bill, receipt or remittance PDF?',who:'ava',no:'skip',systems:['gmail'],auto:'api',note:'reads Gmail'},
       {kind:'condition',text:'New — not collected before?',who:'ava',no:'skip',systems:[],auto:'api',note:'internal check'},
       {kind:'action',text:'Drop it in your chat to pay or file',who:'ava',systems:['slack'],auto:'api',note:'Slack API'}]},
-    {name:'Weekly invoicing',status:'pilot',trig:'Every weekday morning, check your jobs',sub:'Drafts finished jobs, you approve',steps:[
+    {name:'Weekly invoicing',status:'live',trig:'Every weekday morning, check your jobs',sub:'Drafts finished jobs, you approve',steps:[
       {kind:'condition',text:'Done, not invoiced, quiet 2+ days?',who:'ava',no:'wait',systems:['fergus'],auto:'api',note:'Fergus job data'},
       {kind:'action',text:'Draft it from your usual pricing',who:'ava',systems:['fergus'],auto:'api',note:'from learned pricing'},
       {kind:'action',text:'Ask the crew: finished? materials? credits?',who:'crew',systems:['slack'],auto:'api',note:'Ava asks in Slack'},
