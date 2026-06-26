@@ -303,17 +303,18 @@
     var email=(document.getElementById('reqemail').value||'').trim();
     var phone=(document.getElementById('reqphone').value||'').trim();
     if(!email||email.indexOf('@')<0){say('Pop your email in so we can build it & let you know');document.getElementById('reqemail').focus();return;}
+    try{localStorage.setItem('ava_req',JSON.stringify({nm:nm,email:email,phone:phone}));}catch(e){}
     p.status='requested';
     document.getElementById('donename').textContent='"'+p.name+'" — '+p.steps.length+' steps. We\'ll build it for you.';
     renderList();
     try{
       await fetch(REQUEST_ENDPOINT,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({name:p.name,trigger:p.trig,steps:p.steps,company:(nm||'shared demo'),requester_name:nm,email:email,phone:phone,description:(p.desc||'')})});
     }catch(e){}
-    document.getElementById('reqname').value='';document.getElementById('reqemail').value='';document.getElementById('reqphone').value='';
     show('done');
   }
+  function fillContact(){try{var c=JSON.parse(localStorage.getItem('ava_req')||'{}');if(c.nm)document.getElementById('reqname').value=c.nm;if(c.email)document.getElementById('reqemail').value=c.email;if(c.phone)document.getElementById('reqphone').value=c.phone;}catch(e){}}
 
-  renderList();pickWho('ava');
+  renderList();pickWho('ava');fillContact();
 </script>
 </body>
 </html>
