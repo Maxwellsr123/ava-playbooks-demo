@@ -235,10 +235,10 @@
       if(!j.playbook||!j.playbook.steps)throw new Error('no playbook');
       var pb=j.playbook;
       var steps=pb.steps.map(function(s){return {kind:'action',text:s.text,who:(WHO[s.owner]?s.owner:'ava'),systems:(Array.isArray(s.systems)?s.systems:[]),auto:s.automation,note:s.note};});
-      openDraft({name:pb.name||firstCap(d),trig:pb.trigger||'',status:'draft',steps:steps});
+      openDraft({name:pb.name||firstCap(d),trig:pb.trigger||'',status:'draft',steps:steps,desc:d});
       say('Ava drafted it — tweak anything, then request');
     }catch(e){
-      openDraft(avaDraft(d));
+      var fb=avaDraft(d);fb.desc=d;openDraft(fb);
       say('Offline — used a quick draft');
     }finally{ btn.disabled=false;btn.innerHTML=old; }
   }
