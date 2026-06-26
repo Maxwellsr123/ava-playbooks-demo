@@ -47,6 +47,7 @@
     <!-- LIST -->
     <div class="scr on" id="list">
       <div class="pad">
+        <div id="toolsummary"></div>
         <div class="card pri" style="background:var(--info-bg);border:none;padding:14px;cursor:pointer;border-radius:12px;margin-bottom:18px" onclick="startNew()">
           <div style="display:flex;align-items:center;gap:11px"><i class="ti ti-wand" style="font-size:24px;color:var(--info)"></i><div style="flex:1"><div style="font-size:15px;font-weight:600;color:var(--info)">Design a new playbook</div><div style="font-size:12px;color:var(--info)">Tell us what you want off your plate — we build it for you.</div></div><i class="ti ti-chevron-right" style="color:var(--info)"></i></div>
         </div>
@@ -56,6 +57,17 @@
 
         <p class="lbl" style="margin-top:20px">Live now — or start from these</p>
         <div id="examples"></div>
+      </div>
+    </div>
+
+    <!-- TOOLS -->
+    <div class="scr" id="tools">
+      <div class="pad" style="display:flex;align-items:center;gap:8px"><i class="ti ti-chevron-left" style="font-size:20px;cursor:pointer;color:var(--t1)" onclick="saveTools();renderToolSummary();show('list')"></i><div><span class="h">Your software</span><div style="font-size:12px;color:var(--t2)">Tick what your business uses — so Ava knows what to do</div></div></div>
+      <div class="pad" style="padding-top:0">
+        <div id="toolsbody"></div>
+        <p class="lbl" style="margin-top:16px">Use something else?</p>
+        <div style="display:flex;gap:7px"><input id="toolcustom" class="in" placeholder="Add your own (e.g. Buildxact)" style="flex:1" onkeydown="if(event.key==='Enter')addCustomTool()" /><button class="btn" onclick="addCustomTool()">Add</button></div>
+        <button class="btn pri full" style="padding:11px 0;margin-top:16px" onclick="saveTools();renderToolSummary();show('list')">Done</button>
       </div>
     </div>
 
@@ -169,13 +181,61 @@
     looper:{short:'Looper',icon:'ti-headset',note:'One of our people does it for you.'},
     browser:{short:'Browser',icon:'ti-browser',note:'Ava drives the software on screen where there\'s no API.'}
   };
-  var SRC={gmail:{label:'Gmail',icon:'ti-mail'},slack:{label:'Slack',icon:'ti-brand-slack'},fergus:{label:'Fergus',icon:'ti-briefcase'},xero:{label:'Xero',icon:'ti-businessplan'}};
   var AUTO={api:{label:'API ✓',c:'var(--green)',bg:'var(--green-bg)'},browser:{label:'Browser',c:'var(--coral)',bg:'var(--coral-bg)'},manual:{label:'Backfill',c:'var(--purple)',bg:'var(--purple-bg)'}};
+  var TOOLS=[
+    {k:'gmail',label:'Gmail / Google',cat:'Email',icon:'ti-mail'},
+    {k:'outlook',label:'Outlook / Microsoft 365',cat:'Email',icon:'ti-mail'},
+    {k:'xero',label:'Xero',cat:'Accounting',icon:'ti-businessplan'},
+    {k:'myob',label:'MYOB',cat:'Accounting',icon:'ti-businessplan'},
+    {k:'quickbooks',label:'QuickBooks',cat:'Accounting',icon:'ti-businessplan'},
+    {k:'fergus',label:'Fergus',cat:'Job management',icon:'ti-briefcase'},
+    {k:'servicem8',label:'ServiceM8',cat:'Job management',icon:'ti-briefcase'},
+    {k:'tradify',label:'Tradify',cat:'Job management',icon:'ti-briefcase'},
+    {k:'simpro',label:'Simpro',cat:'Job management',icon:'ti-briefcase'},
+    {k:'aroflo',label:'AroFlo',cat:'Job management',icon:'ti-briefcase'},
+    {k:'nextminute',label:'NextMinute',cat:'Job management',icon:'ti-briefcase'},
+    {k:'jobber',label:'Jobber',cat:'Job management',icon:'ti-briefcase'},
+    {k:'slack',label:'Slack',cat:'Messaging',icon:'ti-brand-slack'},
+    {k:'teams',label:'Microsoft Teams',cat:'Messaging',icon:'ti-users'},
+    {k:'whatsapp',label:'WhatsApp',cat:'Messaging',icon:'ti-brand-whatsapp'},
+    {k:'gdrive',label:'Google Drive',cat:'Files',icon:'ti-folder'},
+    {k:'onedrive',label:'OneDrive',cat:'Files',icon:'ti-folder'},
+    {k:'dropbox',label:'Dropbox',cat:'Files',icon:'ti-folder'}
+  ];
+  var sel={}; var customTools=[];
+  function toolExists(k){return TOOLS.concat(customTools).some(function(x){return x.k===k;});}
+  function toolMeta(k){var a=TOOLS.concat(customTools);for(var i=0;i<a.length;i++){if(a[i].k===k)return {label:a[i].label,icon:a[i].icon||'ti-tool'};}return {label:(k.charAt(0).toUpperCase()+k.slice(1)),icon:'ti-tool'};}
+  function selectedKeys(){return Object.keys(sel).filter(function(k){return sel[k];});}
+  function saveTools(){try{localStorage.setItem('ava_tools',JSON.stringify({sel:selectedKeys(),custom:customTools}));}catch(e){}}
+  function loadTools(){try{var d=JSON.parse(localStorage.getItem('ava_tools')||'{}');(d.custom||[]).forEach(function(c){if(!toolExists(c.k))customTools.push(c);});(d.sel||[]).forEach(function(k){sel[k]=true;});}catch(e){}}
+  function openTools(){renderTools();show('tools');}
+  function toggleTool(k){sel[k]=!sel[k];renderTools();}
+  function addCustomTool(){var v=(document.getElementById('toolcustom').value||'').trim();if(!v)return;var k='c_'+v.toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'');if(!toolExists(k))customTools.push({k:k,label:v,cat:'Other',icon:'ti-tool'});sel[k]=true;document.getElementById('toolcustom').value='';renderTools();}
+  function renderTools(){
+    var all=TOOLS.concat(customTools);var cats=[];all.forEach(function(t){if(cats.indexOf(t.cat)<0)cats.push(t.cat);});
+    var h='';
+    cats.forEach(function(c){
+      h+='<p class="lbl" style="margin-top:14px">'+esc(c)+'</p><div class="card">';
+      all.filter(function(t){return t.cat===c;}).forEach(function(t){
+        var on=!!sel[t.k];
+        h+='<div onclick="toggleTool(\''+t.k+'\')" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid var(--bd);cursor:pointer"><i class="ti '+(t.icon||'ti-tool')+'" style="color:var(--t1)"></i><span style="flex:1;font-size:13px">'+esc(t.label)+'</span><i class="ti '+(on?'ti-square-check':'ti-square')+'" style="font-size:19px;color:'+(on?'var(--info)':'var(--t2)')+'"></i></div>';
+      });
+      h+='</div>';
+    });
+    document.getElementById('toolsbody').innerHTML=h;
+  }
+  function renderToolSummary(){
+    var el=document.getElementById('toolsummary');if(!el)return;
+    var ks=selectedKeys();
+    if(!ks.length){el.innerHTML='<div class="card" style="border:1px solid var(--bd2);padding:12px;cursor:pointer;margin-bottom:14px" onclick="openTools()"><div style="display:flex;align-items:center;gap:10px"><i class="ti ti-checkup-list" style="font-size:20px;color:var(--info)"></i><div style="flex:1"><div style="font-size:14px;font-weight:600">First — tell Ava your software</div><div style="font-size:12px;color:var(--t2)">So she uses what you actually have (Outlook vs Gmail, your job app, etc.)</div></div><i class="ti ti-chevron-right" style="color:var(--t2)"></i></div></div>';return;}
+    var chips=ks.map(function(k){var m=toolMeta(k);return '<span class="chip" style="display:inline-flex;align-items:center;gap:3px"><i class="ti '+m.icon+'" style="font-size:11px"></i> '+esc(m.label)+'</span>';}).join('');
+    el.innerHTML='<div class="card" style="padding:10px 12px;margin-bottom:14px"><div style="display:flex;align-items:center;margin-bottom:7px"><span style="font-size:12px;font-weight:600;color:var(--t1);flex:1">Your software</span><span style="font-size:12px;color:var(--info);cursor:pointer" onclick="openTools()">Edit</span></div><div style="display:flex;gap:6px;flex-wrap:wrap">'+chips+'</div></div>';
+  }
   function srcAutoRow(s){
     var sys=s.systems||[];
     if(!sys.length&&!s.auto)return '';
     var h='<div style="display:flex;align-items:center;gap:6px;margin-top:7px;flex-wrap:wrap">';
-    sys.forEach(function(k){if(SRC[k])h+='<span class="chip" style="display:inline-flex;align-items:center;gap:3px"><i class="ti '+SRC[k].icon+'" style="font-size:11px"></i> '+SRC[k].label+'</span>';});
+    sys.forEach(function(k){var m=toolMeta(k);h+='<span class="chip" style="display:inline-flex;align-items:center;gap:3px"><i class="ti '+m.icon+'" style="font-size:11px"></i> '+esc(m.label)+'</span>';});
     if(AUTO[s.auto])h+='<span class="chip" style="background:'+AUTO[s.auto].bg+';color:'+AUTO[s.auto].c+'">'+AUTO[s.auto].label+'</span>';
     if(s.note)h+='<span style="font-size:10px;color:var(--t2);flex:1;text-align:right;min-width:90px">'+esc(s.note)+'</span>';
     return h+'</div>';
@@ -206,6 +266,7 @@
   function statusChip(st){if(st==='live')return '<span class="who ava"><i class="ti ti-circle-filled" style="font-size:8px"></i> live</span>';if(st==='requested')return '<span class="chip" style="background:var(--warn-bg);color:var(--warn)">requested</span>';if(st==='pilot')return '<span class="chip" style="background:var(--warn-bg);color:var(--warn)">pilot</span>';return '<span class="chip">draft</span>';}
 
   function renderList(){
+    renderToolSummary();
     var m=document.getElementById('mine');
     if(!mine.length){m.innerHTML='<div style="font-size:12px;color:var(--t2);padding:8px 2px">Nothing yet — design your first one above.</div>';}
     else{m.innerHTML=mine.map(function(p,i){return '<div class="card" style="padding:11px 12px;margin-bottom:8px;display:flex;align-items:center;gap:10px;cursor:pointer" onclick="openMine('+i+')"><i class="ti ti-list-check" style="color:var(--t1)"></i><div style="flex:1"><div style="font-size:14px">'+esc(p.name)+'</div><div style="font-size:11px;color:var(--t2)">'+p.steps.length+' steps · '+esc(p.trig||'no trigger yet')+'</div></div>'+statusChip(p.status)+'<i class="ti ti-chevron-right" style="color:var(--t2)"></i></div>';}).join('');}
@@ -229,7 +290,7 @@
     var btn=document.getElementById('draftbtn');var old=btn.innerHTML;
     btn.disabled=true;btn.innerHTML='<i class="ti ti-loader-2 spin"></i> Ava is drafting…';
     try{
-      var r=await fetch(DRAFT_ENDPOINT,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({description:d})});
+      var r=await fetch(DRAFT_ENDPOINT,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({description:d,tools:selectedKeys().map(function(k){return {key:k,label:toolMeta(k).label};})})});
       if(!r.ok)throw new Error('http '+r.status);
       var j=await r.json();
       if(!j.playbook||!j.playbook.steps)throw new Error('no playbook');
@@ -252,13 +313,13 @@
     document.getElementById('btrig').textContent=p.trig?('When '+p.trig.replace(/^when\s+/i,'')):'Tap to set when it runs';
     var n=p.steps.length,h='';
     var used={},gaps=0;
-    p.steps.forEach(function(s){(s.systems||[]).forEach(function(k){if(SRC[k])used[k]=1;});if(s.auto==='browser'||s.auto==='manual')gaps++;});
+    p.steps.forEach(function(s){(s.systems||[]).forEach(function(k){used[k]=1;});if(s.auto==='browser'||s.auto==='manual')gaps++;});
     var uk=Object.keys(used);
     if(uk.length||gaps){
       h+='<div class="card" style="padding:10px 12px;margin-bottom:10px;background:var(--bg1);border:none">'
         +'<div style="font-size:11px;font-weight:600;color:var(--t1);margin-bottom:6px">Where the work happens</div>'
         +'<div style="display:flex;gap:6px;flex-wrap:wrap">'
-        +uk.map(function(k){return '<span class="chip" style="display:inline-flex;align-items:center;gap:3px"><i class="ti '+SRC[k].icon+'" style="font-size:11px"></i> '+SRC[k].label+'</span>';}).join('')
+        +uk.map(function(k){var m=toolMeta(k);return '<span class="chip" style="display:inline-flex;align-items:center;gap:3px"><i class="ti '+m.icon+'" style="font-size:11px"></i> '+esc(m.label)+'</span>';}).join('')
         +(gaps?'<span class="chip" style="background:var(--coral-bg);color:var(--coral)"><i class="ti ti-alert-triangle" style="font-size:11px"></i> '+gaps+' step'+(gaps>1?'s':'')+' need backfill (no API)</span>':'<span class="chip" style="background:var(--green-bg);color:var(--green)">fully automatable</span>')
         +'</div></div>';
     }
@@ -314,7 +375,7 @@
   }
   function fillContact(){try{var c=JSON.parse(localStorage.getItem('ava_req')||'{}');if(c.nm)document.getElementById('reqname').value=c.nm;if(c.email)document.getElementById('reqemail').value=c.email;if(c.phone)document.getElementById('reqphone').value=c.phone;}catch(e){}}
 
-  renderList();pickWho('ava');fillContact();
+  loadTools();renderList();pickWho('ava');fillContact();
 </script>
 </body>
 </html>
