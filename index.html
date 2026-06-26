@@ -137,14 +137,8 @@
             <span class="chip" style="cursor:pointer" onclick="suggest('File the signed quote in the customer folder','browser')">File the quote</span>
           </div>
         </div>
-        <p class="lbl" style="margin-top:16px">Who runs it? <span style="font-weight:400;color:var(--t2)">· tap to choose</span></p>
-        <div id="whosel" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">
-          <span class="pick" data-k="ava" onclick="pickWho('ava')"><i class="ti ti-robot"></i> Ava</span>
-          <span class="pick" data-k="you" onclick="pickWho('you')"><i class="ti ti-user"></i> You</span>
-          <span class="pick" data-k="crew" onclick="pickWho('crew')"><i class="ti ti-tool"></i> Crew</span>
-          <span class="pick" data-k="looper" onclick="pickWho('looper')"><i class="ti ti-headset"></i> Looper</span>
-          <span class="pick" data-k="browser" onclick="pickWho('browser')"><i class="ti ti-browser"></i> Browser</span>
-        </div>
+        <p class="lbl" style="margin-top:16px">Who runs it? <span style="font-weight:400;color:var(--t2)">· Ava, a Looper, you, or your team</span></p>
+        <div id="whosel" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px"></div>
         <div id="whonote" style="font-size:11px;color:var(--t1);background:var(--bg1);border-radius:8px;padding:9px 11px;margin-bottom:14px"></div>
         <button class="btn pri full" id="savebtn" style="padding:9px 0" onclick="saveStep()">Add step</button>
       </div>
@@ -271,6 +265,21 @@
       {kind:'action',text:'Raise it in Fergus',who:'browser',systems:['fergus'],auto:'browser',note:'Fergus has no invoice API'}]}
   ];
   var mine=[]; var cur=-1; var exIdx=-1; var stepMode='add'; var stepIdx=-1; var chosenWho='ava';
+  var team=[];
+  function saveTeam(){try{localStorage.setItem('ava_team',JSON.stringify(team));}catch(e){}}
+  function loadTeam(){try{team=JSON.parse(localStorage.getItem('ava_team')||'[]')||[];}catch(e){team=[];}}
+  function whoMeta(k){if(WHO[k])return WHO[k];var t=team.filter(function(x){return x.k===k;})[0];if(t)return {short:t.name,icon:'ti-user',note:t.name+' (your team) handles this step.'};return {short:k,icon:'ti-user',note:''};}
+  function whoClass(k){return WHO[k]?k:'crew';}
+  function renderWhoPicker(){
+    var el=document.getElementById('whosel');if(!el)return;
+    var opts=[{k:'ava',label:'Ava',icon:'ti-robot'},{k:'looper',label:'Our Loopers',icon:'ti-headset'},{k:'crew',label:'Your crew',icon:'ti-tool'}];
+    team.forEach(function(t){opts.push({k:t.k,label:t.name,icon:'ti-user'});});
+    opts.push({k:'you',label:'You',icon:'ti-user'},{k:'browser',label:'Browser',icon:'ti-browser'});
+    var h=opts.map(function(o){return '<span class="pick'+(chosenWho===o.k?' sel':'')+'" data-k="'+o.k+'" onclick="pickWho(\''+o.k+'\')"><i class="ti '+o.icon+'"></i> '+esc(o.label)+'</span>';}).join('');
+    h+='<span class="pick" style="border-style:dashed" onclick="addMember()"><i class="ti ti-plus"></i> Name someone</span>';
+    el.innerHTML=h;
+  }
+  function addMember(){var n=window.prompt('Name a team member (e.g. Paul)');if(!n)return;n=n.trim();if(!n)return;var k='tm_'+n.toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'');if(!team.some(function(t){return t.k===k;})){team.push({k:k,name:n});saveTeam();}chosenWho=k;renderWhoPicker();var wn=document.getElementById('whonote');if(wn)wn.textContent=whoMeta(k).note;}
   function esc(s){return (s||'').replace(/[&<>"]/g,function(c){return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c];});}
   function show(id){document.querySelectorAll('.scr').forEach(function(s){s.classList.toggle('on',s.id===id);});window.scrollTo(0,0);}
   var tmr;function say(m){var a=document.getElementById('alert');a.textContent=m;a.classList.add('show');clearTimeout(tmr);tmr=setTimeout(function(){a.classList.remove('show');},2200);}
@@ -338,9 +347,9 @@
         +'</div></div>';
     }
     if(!n){h+='<div style="font-size:12px;color:var(--t2);text-align:center;padding:14px">No steps yet — add one below, or let Ava suggest.</div>';}
-    p.steps.forEach(function(s,i){var w=WHO[s.who];
+    p.steps.forEach(function(s,i){var w=whoMeta(s.who);
       h+='<div class="card" style="padding:10px 12px;margin-bottom:6px">'
-        +'<div style="display:flex;align-items:center;gap:9px"><span style="font-size:11px;color:var(--t2);width:16px">'+(i+1)+'</span><div style="flex:1;font-size:13px;cursor:pointer" onclick="editStepBtn('+i+')">'+esc(s.text)+'</div><span class="who '+s.who+'"><i class="ti '+w.icon+'"></i> '+w.short+'</span></div>'
+        +'<div style="display:flex;align-items:center;gap:9px"><span style="font-size:11px;color:var(--t2);width:16px">'+(i+1)+'</span><div style="flex:1;font-size:13px;cursor:pointer" onclick="editStepBtn('+i+')">'+esc(s.text)+'</div><span class="who '+whoClass(s.who)+'" style="cursor:pointer" onclick="editStepBtn('+i+')"><i class="ti '+w.icon+'"></i> '+esc(w.short)+'</span></div>'
         +srcAutoRow(s)
         +'<div style="display:flex;justify-content:flex-end;gap:16px;margin-top:8px;padding-top:8px;border-top:1px solid var(--bd)">'
         +'<i class="ti ti-arrow-up" style="font-size:15px;cursor:pointer;color:'+(i===0?'var(--bd2)':'var(--t1)')+'" onclick="moveStep('+i+',-1)"></i>'
@@ -377,7 +386,7 @@
   function addStepBtn(){stepMode='add';stepIdx=-1;document.getElementById('stepin').value='';pickWho('ava');document.getElementById('savebtn').textContent='Add step';show('addstep');}
   function editStepBtn(i){stepMode='edit';stepIdx=i;var s=mine[cur].steps[i];document.getElementById('stepin').value=s.text;pickWho(s.who);document.getElementById('savebtn').textContent='Save step';show('addstep');}
   function suggest(t,who){document.getElementById('stepin').value=t;pickWho(who);}
-  function pickWho(k){chosenWho=k;document.querySelectorAll('#whosel .pick').forEach(function(p){p.classList.toggle('sel',p.getAttribute('data-k')===k);});document.getElementById('whonote').textContent=WHO[k].note;}
+  function pickWho(k){chosenWho=k;renderWhoPicker();var wn=document.getElementById('whonote');if(wn)wn.textContent=(whoMeta(k).note||'');}
   function saveStep(){var t=(document.getElementById('stepin').value||'').trim();if(!t){say('Type the step first');return;}var a=mine[cur].steps;if(stepMode==='edit'){a[stepIdx]={kind:'action',text:t,who:chosenWho};}else{a.push({kind:'action',text:t,who:chosenWho});}renderBuilder();show('builder');}
 
   function openExample(i){exIdx=i;var e=examples[i];document.getElementById('extitle').textContent=e.name;document.getElementById('exsub').textContent=e.sub;
@@ -409,7 +418,7 @@
   }
   function fillContact(){try{var c=JSON.parse(localStorage.getItem('ava_req')||'{}');if(c.nm)document.getElementById('reqname').value=c.nm;if(c.email)document.getElementById('reqemail').value=c.email;if(c.phone)document.getElementById('reqphone').value=c.phone;}catch(e){}}
 
-  loadTools();renderList();pickWho('ava');fillContact();
+  loadTools();loadTeam();renderList();pickWho('ava');fillContact();
 </script>
 </body>
 </html>
