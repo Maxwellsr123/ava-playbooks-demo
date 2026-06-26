@@ -109,7 +109,8 @@
     <div class="scr" id="builder">
       <div class="pad" style="display:flex;align-items:center;gap:8px"><i class="ti ti-chevron-left" style="font-size:20px;cursor:pointer;color:var(--t1)" onclick="show('list')"></i><div style="flex:1"><span class="h" id="btitle">Playbook</span><div style="font-size:12px;color:var(--t2)">Add, reorder or edit the steps</div></div></div>
       <div class="pad" style="padding-top:0">
-        <div class="card" style="padding:10px 12px;margin-bottom:12px;display:flex;align-items:center;gap:9px;cursor:pointer" onclick="editTrigger()"><i class="ti ti-clock" style="color:var(--t1)"></i><div style="flex:1;font-size:13px" id="btrig">When…</div><i class="ti ti-pencil" style="color:var(--t2);font-size:14px"></i></div>
+        <div class="card" style="padding:10px 12px;margin-bottom:10px;display:flex;align-items:center;gap:9px;cursor:pointer" onclick="editTrigger()"><i class="ti ti-clock" style="color:var(--t1)"></i><div style="flex:1;font-size:13px" id="btrig">When…</div><i class="ti ti-pencil" style="color:var(--t2);font-size:14px"></i></div>
+        <div style="display:flex;gap:7px;margin-bottom:12px"><input id="repromptin" class="in" placeholder="Ask Ava to change it… e.g. use Outlook, add a credit check" style="flex:1" onkeydown="if(event.key==='Enter')reprompt()" /><button id="repromptbtn" class="btn pri" style="padding:0 14px" onclick="reprompt()"><i class="ti ti-robot" style="font-size:18px"></i></button></div>
         <div id="bsteps"></div>
         <button class="btn full" style="padding:9px 0;margin-top:4px" onclick="addStepBtn()"><i class="ti ti-plus" style="font-size:13px"></i> Add a step</button>
         <p class="lbl" style="margin-top:16px">Your details — so we can build it &amp; let you know</p>
@@ -348,6 +349,23 @@
         +'</div></div>';
     });
     document.getElementById('bsteps').innerHTML=h;
+  }
+  async function reprompt(){
+    var instr=(document.getElementById('repromptin').value||'').trim();
+    if(!instr){say('Tell Ava what to change');return;}
+    var p=mine[cur];
+    var btn=document.getElementById('repromptbtn');var old=btn.innerHTML;btn.disabled=true;btn.innerHTML='<i class="ti ti-loader-2 spin" style="font-size:18px"></i>';
+    try{
+      var current={name:p.name,trigger:p.trig,steps:p.steps.map(function(s){return {text:s.text,owner:s.who,systems:s.systems,automation:s.auto,note:s.note};})};
+      var r=await fetch(DRAFT_ENDPOINT,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({description:instr,current:current,tools:selectedKeys().map(function(k){return {key:k,label:toolMeta(k).label};})})});
+      if(!r.ok)throw new Error('http');
+      var j=await r.json();if(!j.playbook||!j.playbook.steps)throw new Error('no pb');
+      var pb=j.playbook;
+      p.name=pb.name||p.name;p.trig=pb.trigger||p.trig;
+      p.steps=pb.steps.map(function(s){return {kind:'action',text:s.text,who:(WHO[s.owner]?s.owner:'ava'),systems:(Array.isArray(s.systems)?s.systems:[]),auto:s.automation,note:s.note};});
+      renderBuilder();document.getElementById('repromptin').value='';say('Ava updated it');
+    }catch(e){say('Couldn\'t reach Ava — try again');}
+    finally{btn.disabled=false;btn.innerHTML=old;}
   }
   function moveStep(i,d){var a=mine[cur].steps,j=i+d;if(j<0||j>=a.length)return;var t=a[i];a[i]=a[j];a[j]=t;renderBuilder();}
   function delStep(i){mine[cur].steps.splice(i,1);renderBuilder();}
