@@ -97,8 +97,11 @@
         <div class="card" style="padding:10px 12px;margin-bottom:12px;display:flex;align-items:center;gap:9px;cursor:pointer" onclick="editTrigger()"><i class="ti ti-clock" style="color:var(--t1)"></i><div style="flex:1;font-size:13px" id="btrig">When…</div><i class="ti ti-pencil" style="color:var(--t2);font-size:14px"></i></div>
         <div id="bsteps"></div>
         <button class="btn full" style="padding:9px 0;margin-top:4px" onclick="addStepBtn()"><i class="ti ti-plus" style="font-size:13px"></i> Add a step</button>
-        <input id="reqwho" class="in" placeholder="Your name or business (optional)" style="margin-top:14px" />
-        <button class="btn pri full" style="padding:11px 0;margin-top:8px" onclick="requestPb()"><i class="ti ti-send" style="font-size:14px"></i> Request this automation</button>
+        <p class="lbl" style="margin-top:16px">Your details — so we can build it &amp; let you know</p>
+        <input id="reqname" class="in" placeholder="Your name or business" />
+        <input id="reqemail" class="in" type="email" placeholder="Email" style="margin-top:8px" />
+        <input id="reqphone" class="in" type="tel" placeholder="Phone (optional)" style="margin-top:8px" />
+        <button class="btn pri full" style="padding:11px 0;margin-top:12px" onclick="requestPb()"><i class="ti ti-send" style="font-size:14px"></i> Request this automation</button>
         <div style="font-size:11px;color:var(--t2);text-align:center;margin-top:8px">Lands in your app, and we get pinged in Slack. We build it for you.</div>
       </div>
     </div>
@@ -296,14 +299,17 @@
   async function requestPb(){
     var p=mine[cur];
     if(!p.steps.length){say('Add at least one step first');return;}
-    var who=(document.getElementById('reqwho').value||'').trim();
+    var nm=(document.getElementById('reqname').value||'').trim();
+    var email=(document.getElementById('reqemail').value||'').trim();
+    var phone=(document.getElementById('reqphone').value||'').trim();
+    if(!email||email.indexOf('@')<0){say('Pop your email in so we can build it & let you know');document.getElementById('reqemail').focus();return;}
     p.status='requested';
     document.getElementById('donename').textContent='"'+p.name+'" — '+p.steps.length+' steps. We\'ll build it for you.';
     renderList();
     try{
-      await fetch(REQUEST_ENDPOINT,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({name:p.name,trigger:p.trig,steps:p.steps,company:(who||'shared demo'),description:(p.desc||'')})});
+      await fetch(REQUEST_ENDPOINT,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({name:p.name,trigger:p.trig,steps:p.steps,company:(nm||'shared demo'),requester_name:nm,email:email,phone:phone,description:(p.desc||'')})});
     }catch(e){}
-    document.getElementById('reqwho').value='';
+    document.getElementById('reqname').value='';document.getElementById('reqemail').value='';document.getElementById('reqphone').value='';
     show('done');
   }
 
