@@ -62,12 +62,12 @@
 
     <!-- TOOLS -->
     <div class="scr" id="tools">
-      <div class="pad" style="display:flex;align-items:center;gap:8px"><i class="ti ti-chevron-left" style="font-size:20px;cursor:pointer;color:var(--t1)" onclick="saveTools();renderToolSummary();show('list')"></i><div><span class="h">Your software</span><div style="font-size:12px;color:var(--t2)">Tick what your business uses — so Ava knows what to do</div></div></div>
+      <div class="pad" style="display:flex;align-items:center;gap:8px"><i class="ti ti-chevron-left" style="font-size:20px;cursor:pointer;color:var(--t1)" onclick="finishTools()"></i><div><span class="h">Which systems do you use?</span><div style="font-size:12px;color:var(--t2)">Tick everything — pick from any group. Ava only uses what you've got.</div></div></div>
       <div class="pad" style="padding-top:0">
         <div id="toolsbody"></div>
         <p class="lbl" style="margin-top:16px">Use something else?</p>
         <div style="display:flex;gap:7px"><input id="toolcustom" class="in" placeholder="Add your own (e.g. Buildxact)" style="flex:1" onkeydown="if(event.key==='Enter')addCustomTool()" /><button class="btn" onclick="addCustomTool()">Add</button></div>
-        <button class="btn pri full" style="padding:11px 0;margin-top:16px" onclick="saveTools();renderToolSummary();show('list')">Done</button>
+        <button class="btn pri full" style="padding:11px 0;margin-top:16px" onclick="finishTools()">Done</button>
       </div>
     </div>
 
@@ -273,7 +273,9 @@
     document.getElementById('examples').innerHTML=examples.map(function(e,i){return '<div class="card" style="padding:11px 12px;margin-bottom:8px;display:flex;align-items:center;gap:10px;cursor:pointer" onclick="openExample('+i+')"><i class="ti ti-bolt" style="color:var(--t1)"></i><div style="flex:1"><div style="font-size:14px">'+esc(e.name)+'</div><div style="font-size:11px;color:var(--t2)">'+esc(e.sub)+'</div></div>'+statusChip(e.status)+'<i class="ti ti-chevron-right" style="color:var(--t2)"></i></div>';}).join('');
   }
 
-  function startNew(){document.getElementById('desc').value='';show('describe');}
+  var pendingNew=false;
+  function startNew(){document.getElementById('desc').value='';if(!selectedKeys().length){pendingNew=true;say('First — which systems do you use?');openTools();return;}show('describe');}
+  function finishTools(){saveTools();renderToolSummary();if(pendingNew&&selectedKeys().length){pendingNew=false;document.getElementById('desc').value='';show('describe');}else{pendingNew=false;show('list');}}
   function firstCap(s){s=s.trim();return s.charAt(0).toUpperCase()+s.slice(1);}
   function avaDraft(d){var x=d.toLowerCase();
     if(/invoice|paid|pay|owe|overdue|chase|debt/.test(x))return {name:'Chase unpaid invoices',trig:'a customer goes 2 weeks overdue',status:'draft',steps:[{kind:'action',text:'Check Xero each morning for overdue invoices',who:'ava'},{kind:'action',text:'Send the customer a friendly reminder',who:'ava'},{kind:'action',text:'If still unpaid after a week, flag it to you',who:'you'},{kind:'action',text:'Call them if it hits 3 weeks overdue',who:'looper'}]};
