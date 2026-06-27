@@ -182,12 +182,12 @@
   };
   var AUTO={api:{label:'API ✓',c:'var(--green)',bg:'var(--green-bg)'},browser:{label:'Browser',c:'var(--coral)',bg:'var(--coral-bg)'},manual:{label:'Backfill',c:'var(--purple)',bg:'var(--purple-bg)'}};
   var TOOLS=[
-    {k:'gmail',label:'Gmail / Google',cat:'Email',icon:'ti-mail'},
+    {k:'gmail',label:'Gmail / Google',cat:'Email',icon:'ti-mail',live:true},
     {k:'outlook',label:'Outlook / Microsoft 365',cat:'Email',icon:'ti-mail'},
-    {k:'xero',label:'Xero',cat:'Accounting',icon:'ti-businessplan'},
+    {k:'xero',label:'Xero',cat:'Accounting',icon:'ti-businessplan',live:true},
     {k:'myob',label:'MYOB',cat:'Accounting',icon:'ti-businessplan'},
     {k:'quickbooks',label:'QuickBooks',cat:'Accounting',icon:'ti-businessplan'},
-    {k:'fergus',label:'Fergus',cat:'Job management',icon:'ti-briefcase'},
+    {k:'fergus',label:'Fergus',cat:'Job management',icon:'ti-briefcase',live:true},
     {k:'servicem8',label:'ServiceM8',cat:'Job management',icon:'ti-briefcase'},
     {k:'tradify',label:'Tradify',cat:'Job management',icon:'ti-briefcase'},
     {k:'simpro',label:'Simpro',cat:'Job management',icon:'ti-briefcase'},
@@ -201,7 +201,7 @@
     {k:'houzzpro',label:'Houzz Pro',cat:'Building & construction',icon:'ti-building'},
     {k:'workflowmax',label:'WorkflowMax',cat:'Building & construction',icon:'ti-building'},
     {k:'planswift',label:'PlanSwift',cat:'Building & construction',icon:'ti-building'},
-    {k:'slack',label:'Slack',cat:'Messaging',icon:'ti-brand-slack'},
+    {k:'slack',label:'Slack',cat:'Messaging',icon:'ti-brand-slack',live:true},
     {k:'teams',label:'Microsoft Teams',cat:'Messaging',icon:'ti-users'},
     {k:'whatsapp',label:'WhatsApp',cat:'Messaging',icon:'ti-brand-whatsapp'},
     {k:'gdrive',label:'Google Drive',cat:'Files',icon:'ti-folder'},
@@ -219,12 +219,12 @@
   function addCustomTool(){var v=(document.getElementById('toolcustom').value||'').trim();if(!v)return;var k='c_'+v.toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'');if(!toolExists(k))customTools.push({k:k,label:v,cat:'Other',icon:'ti-tool'});sel[k]=true;document.getElementById('toolcustom').value='';renderTools();}
   function renderTools(){
     var all=TOOLS.concat(customTools);var cats=[];all.forEach(function(t){if(cats.indexOf(t.cat)<0)cats.push(t.cat);});
-    var h='';
+    var h='<div style="font-size:11px;color:var(--t2);margin-bottom:4px"><span class="chip" style="background:var(--green-bg);color:var(--green);font-size:10px"><i class="ti ti-circle-filled" style="font-size:8px"></i> live</span> = ready with Elastic AI now · the rest we build for you</div>';
     cats.forEach(function(c){
       h+='<p class="lbl" style="margin-top:14px">'+esc(c)+'</p><div class="card">';
       all.filter(function(t){return t.cat===c;}).forEach(function(t){
         var on=!!sel[t.k];
-        h+='<div onclick="toggleTool(\''+t.k+'\')" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid var(--bd);cursor:pointer"><i class="ti '+(t.icon||'ti-tool')+'" style="color:var(--t1)"></i><span style="flex:1;font-size:13px">'+esc(t.label)+'</span><i class="ti '+(on?'ti-square-check':'ti-square')+'" style="font-size:19px;color:'+(on?'var(--info)':'var(--t2)')+'"></i></div>';
+        h+='<div onclick="toggleTool(\''+t.k+'\')" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid var(--bd);cursor:pointer"><i class="ti '+(t.icon||'ti-tool')+'" style="color:var(--t1)"></i><span style="flex:1;font-size:13px">'+esc(t.label)+'</span>'+(t.live?'<span class="chip" style="background:var(--green-bg);color:var(--green);font-size:10px"><i class="ti ti-circle-filled" style="font-size:8px"></i> live</span>':'')+'<i class="ti '+(on?'ti-square-check':'ti-square')+'" style="font-size:19px;color:'+(on?'var(--info)':'var(--t2)')+'"></i></div>';
       });
       h+='</div>';
     });
