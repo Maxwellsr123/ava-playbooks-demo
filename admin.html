@@ -70,16 +70,16 @@
   }).join('');}
   function toggle(id){var e=document.getElementById(id);if(e)e.classList.toggle('open');}
   function render(d){
-    var drafts=d.drafts||[],reqs=d.requests||[];
-    var sentFromBuilt=drafts.filter(function(x){return x.requested;}).length;
+    var drafts=d.drafts||[],reqs=d.requests||[],views=d.views||[];
     var emails={};reqs.forEach(function(r){if(r.email)emails[r.email.toLowerCase()]=1;});
     var dayAgo=Date.now()-86400000;
-    var built24=drafts.filter(function(x){return new Date(x.created_at).getTime()>dayAgo;}).length;
+    var views24=views.filter(function(x){return new Date(x.created_at).getTime()>dayAgo;}).length;
     var h='<div class="stats">'
-      +'<div class="stat accent"><div class="n">'+drafts.length+'</div><div class="l">playbooks built</div></div>'
+      +'<div class="stat accent"><div class="n">'+views.length+'</div><div class="l">visits</div></div>'
+      +'<div class="stat"><div class="n">'+drafts.length+'</div><div class="l">built</div></div>'
       +'<div class="stat"><div class="n">'+reqs.length+'</div><div class="l">sent to you</div></div>'
-      +'<div class="stat"><div class="n">'+Object.keys(emails).length+'</div><div class="l">unique leads</div></div>'
-      +'<div class="stat"><div class="n">'+built24+'</div><div class="l">built last 24h</div></div></div>';
+      +'<div class="stat"><div class="n">'+Object.keys(emails).length+'</div><div class="l">leads</div></div></div>';
+    h+='<div style="font-size:12px;color:var(--t1);margin:-8px 0 4px;display:flex;align-items:center;gap:8px;flex-wrap:wrap"><b>Funnel:</b> '+views.length+' visited <i class="ti ti-arrow-right" style="font-size:12px;color:var(--t2)"></i> '+drafts.length+' built <i class="ti ti-arrow-right" style="font-size:12px;color:var(--t2)"></i> '+reqs.length+' sent'+(views24?' · <span style="color:var(--t2)">'+views24+' visits in last 24h</span>':'')+'</div>';
 
     h+='<h2><i class="ti ti-mail" style="color:var(--green)"></i> Sent to you <span class="count">'+reqs.length+'</span></h2>';
     if(!reqs.length)h+='<div class="empty">No one has sent a design yet.</div>';
