@@ -79,7 +79,14 @@
       <div class="pad" style="display:flex;align-items:center;gap:8px"><i class="ti ti-chevron-left" style="font-size:20px;cursor:pointer;color:var(--t1)" onclick="show('list')"></i><div><span class="h">Chat with Ava</span><div style="font-size:12px;color:var(--t2)">She'll ask a couple of questions, then build it</div></div></div>
       <div id="chatlog" style="padding:8px 14px;display:flex;flex-direction:column;gap:8px"></div>
       <div class="pad" style="padding-top:6px">
-        <div style="display:flex;gap:7px"><input id="chatin" class="in" placeholder="Type your reply…" style="flex:1" onkeydown="if(event.key==='Enter')chatSend()" /><button class="btn pri" style="padding:0 14px" onclick="chatSend()"><i class="ti ti-arrow-up" style="font-size:18px"></i></button></div>
+        <div style="font-size:11px;color:var(--t2);margin-bottom:6px">Need a nudge? Tap one to build it instantly:</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:9px">
+          <span class="chip" style="cursor:pointer" onclick="quickStart('Chase unpaid invoices')">Chase unpaid invoices</span>
+          <span class="chip" style="cursor:pointer" onclick="quickStart('Follow up quotes that have not been accepted')">Follow up quotes</span>
+          <span class="chip" style="cursor:pointer" onclick="quickStart('Handle new job enquiries that come in by email')">New enquiries</span>
+          <span class="chip" style="cursor:pointer" onclick="quickStart('Collect supplier bills and receipts each week')">Sort my bills</span>
+        </div>
+        <div style="display:flex;gap:7px"><input id="chatin" class="in" placeholder="…or tell Ava in your own words" style="flex:1" onkeydown="if(event.key==='Enter')chatSend()" /><button class="btn pri" style="padding:0 14px" onclick="chatSend()"><i class="ti ti-arrow-up" style="font-size:18px"></i></button></div>
         <div style="font-size:12px;color:var(--t2);text-align:center;margin-top:10px">or <span style="color:var(--info);cursor:pointer" onclick="show('name')">build it from scratch</span></div>
       </div>
     </div>
@@ -317,6 +324,7 @@
       } else {chatMsgs.push({role:'assistant',content:"Hmm, didn't catch that — try again?"});renderChat();}
     }catch(e){chatMsgs.pop();chatMsgs.push({role:'assistant',content:"Couldn't reach the server — give it another go."});renderChat();}
   }
+  function quickStart(t){var i=document.getElementById('chatin');if(i)i.value=t;chatSend();}
   function hideFollowup(){var e=document.getElementById('avahint');if(e)e.style.display='none';}
   function setFollowup(q){
     var el=document.getElementById('avahint');if(!el)return;el.style.display='block';
