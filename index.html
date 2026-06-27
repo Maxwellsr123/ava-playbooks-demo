@@ -74,21 +74,13 @@
       </div>
     </div>
 
-    <!-- DESCRIBE -->
+    <!-- CHAT -->
     <div class="scr" id="describe">
-      <div class="pad" style="display:flex;align-items:center;gap:8px"><i class="ti ti-chevron-left" style="font-size:20px;cursor:pointer;color:var(--t1)" onclick="show('list')"></i><div><span class="h">Design a playbook</span><div style="font-size:12px;color:var(--t2)">Tell Ava what you want off your plate</div></div></div>
-      <div class="pad" style="padding-top:0">
-        <textarea id="desc" placeholder="e.g. Chase customers who haven't paid after two weeks, and call them if they still don't pay" style="width:100%;min-height:104px;border:1px solid var(--bd2);border-radius:8px;padding:10px 12px;font-size:14px;font-family:var(--font);resize:vertical"></textarea>
-        <div style="margin:10px 0 0">
-          <div style="font-size:11px;color:var(--t2);margin-bottom:6px">Need a nudge?</div>
-          <div style="display:flex;gap:6px;flex-wrap:wrap">
-            <span class="chip" style="cursor:pointer" onclick="document.getElementById('desc').value='Chase customers who haven\'t paid after two weeks'">Chase unpaid invoices</span>
-            <span class="chip" style="cursor:pointer" onclick="document.getElementById('desc').value='Follow up any quote that hasn\'t been accepted in 5 days'">Follow up quotes</span>
-            <span class="chip" style="cursor:pointer" onclick="document.getElementById('desc').value='Handle new job enquiries that come in by email'">New enquiries</span>
-          </div>
-        </div>
-        <button id="draftbtn" class="btn pri full" style="padding:11px 0;margin-top:18px" onclick="draftFromDescription()"><i class="ti ti-robot" style="font-size:14px"></i> Ava, draft it for me</button>
-        <div style="font-size:12px;color:var(--t2);text-align:center;margin-top:12px">or <span style="color:var(--info);cursor:pointer" onclick="show('name')">build it from scratch</span></div>
+      <div class="pad" style="display:flex;align-items:center;gap:8px"><i class="ti ti-chevron-left" style="font-size:20px;cursor:pointer;color:var(--t1)" onclick="show('list')"></i><div><span class="h">Chat with Ava</span><div style="font-size:12px;color:var(--t2)">She'll ask a couple of questions, then build it</div></div></div>
+      <div id="chatlog" style="padding:8px 14px;display:flex;flex-direction:column;gap:8px"></div>
+      <div class="pad" style="padding-top:6px">
+        <div style="display:flex;gap:7px"><input id="chatin" class="in" placeholder="Type your reply…" style="flex:1" onkeydown="if(event.key==='Enter')chatSend()" /><button class="btn pri" style="padding:0 14px" onclick="chatSend()"><i class="ti ti-arrow-up" style="font-size:18px"></i></button></div>
+        <div style="font-size:12px;color:var(--t2);text-align:center;margin-top:10px">or <span style="color:var(--info);cursor:pointer" onclick="show('name')">build it from scratch</span></div>
       </div>
     </div>
 
@@ -295,8 +287,8 @@
   }
 
   var pendingNew=false;
-  function startNew(){document.getElementById('desc').value='';if(!selectedKeys().length){pendingNew=true;say('First — which systems do you use?');openTools();return;}show('describe');}
-  function finishTools(){saveTools();renderToolSummary();if(pendingNew&&selectedKeys().length){pendingNew=false;document.getElementById('desc').value='';show('describe');}else{pendingNew=false;show('list');}}
+  function startNew(){if(!selectedKeys().length){pendingNew=true;say('First — which systems do you use?');openTools();return;}startChat();show('describe');}
+  function finishTools(){saveTools();renderToolSummary();if(pendingNew&&selectedKeys().length){pendingNew=false;startChat();show('describe');}else{pendingNew=false;show('list');}}
   function firstCap(s){s=s.trim();return s.charAt(0).toUpperCase()+s.slice(1);}
   function avaDraft(d){var x=d.toLowerCase();
     if(/invoice|paid|pay|owe|overdue|chase|debt/.test(x))return {name:'Chase unpaid invoices',trig:'a customer goes 2 weeks overdue',status:'draft',steps:[{kind:'action',text:'Check Xero each morning for overdue invoices',who:'ava'},{kind:'action',text:'Send the customer a friendly reminder',who:'ava'},{kind:'action',text:'If still unpaid after a week, flag it to you',who:'you'},{kind:'action',text:'Call them if it hits 3 weeks overdue',who:'looper'}]};
@@ -307,6 +299,27 @@
     return {name:nm,trig:'',status:'draft',steps:[{kind:'action',text:'Watch for when this should happen',who:'ava'},{kind:'action',text:'Do the routine part automatically',who:'ava'},{kind:'action',text:'Hand the tricky bits to a person',who:'looper'}]};}
   var DRAFT_ENDPOINT='https://somgalhkmptkclgvxhca.supabase.co/functions/v1/playbook-draft';
   function openDraft(p){mine.push(p);cur=mine.length-1;renderBuilder();show('builder');}
+  var chatMsgs=[];
+  function startChat(){chatMsgs=[{role:'assistant',content:"What's eating up your time? Tell me what you'd love off your plate — I'll ask a couple of quick questions, then build you a playbook."}];renderChat();var i=document.getElementById('chatin');if(i)i.value='';}
+  function renderChat(){var el=document.getElementById('chatlog');if(!el)return;el.innerHTML=chatMsgs.map(function(m){if(m.role==='assistant')return '<div style="align-self:flex-start;max-width:86%;background:var(--bg1);border-radius:13px 13px 13px 3px;padding:9px 12px;font-size:13px">'+(m.content==='…'?'<span style="color:var(--t2)">Ava is typing…</span>':esc(m.content))+'</div>';return '<div style="align-self:flex-end;max-width:86%;background:var(--info);color:#fff;border-radius:13px 13px 3px 13px;padding:9px 12px;font-size:13px">'+esc(m.content)+'</div>';}).join('');window.scrollTo(0,document.body.scrollHeight);}
+  async function chatSend(){
+    var inp=document.getElementById('chatin');var t=(inp.value||'').trim();if(!t)return;
+    chatMsgs.push({role:'user',content:t});inp.value='';chatMsgs.push({role:'assistant',content:'…'});renderChat();
+    try{
+      var send=chatMsgs.filter(function(m){return m.content!=='…';});
+      var r=await fetch(DRAFT_ENDPOINT,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({messages:send,tools:selectedKeys().map(function(k){return {key:k,label:toolMeta(k).label};})})});
+      var j=await r.json();
+      chatMsgs.pop();
+      if(j.question){chatMsgs.push({role:'assistant',content:j.question});renderChat();}
+      else if(j.playbook){
+        var pb=j.playbook;
+        var steps=pb.steps.map(function(s){return {kind:'action',text:s.text,who:(WHO[s.owner]?s.owner:'ava'),systems:(Array.isArray(s.systems)?s.systems:[]),auto:s.automation,note:s.note};});
+        var desc=chatMsgs.filter(function(m){return m.role==='user';}).map(function(m){return m.content;}).join(' / ');
+        openDraft({name:pb.name||'New playbook',trig:pb.trigger||'',status:'draft',steps:steps,desc:desc});
+        say('Ava built your playbook — tweak it or ask for changes');
+      } else {chatMsgs.push({role:'assistant',content:"Hmm, I didn't catch that — try again?"});renderChat();}
+    }catch(e){chatMsgs.pop();chatMsgs.push({role:'assistant',content:"I couldn't reach the server — give it another go in a sec."});renderChat();}
+  }
   async function draftFromDescription(){
     var d=(document.getElementById('desc').value||'').trim();
     if(!d){say('Tell Ava what you want first');return;}
