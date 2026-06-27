@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Elastic AI · Playbooks Admin</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.31.0/dist/tabler-icons.min.css" />
+<style>
+  :root{--bg:#f3f2f0;--card:#fff;--t0:#1a1a1a;--t1:#5f5e5b;--t2:#8f8e8a;--bd:rgba(0,0,0,.1);
+        --orange:#f26a21;--orange-d:#cf5b16;--orange-bg:#fce8d6;--yellow:#8a6a00;--yellow-bg:#fff2ce;
+        --green:#0f6e56;--green-bg:#e1f5ee;--purple:#534ab7;--purple-bg:#eeedfe;--coral:#993c1d;--coral-bg:#faece7;
+        --font:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);font-family:var(--font);color:var(--t0)}
+  .wrap{max-width:920px;margin:0 auto;padding:18px 16px 60px}
+  .top{display:flex;align-items:center;gap:10px;margin-bottom:18px}
+  .top .logo{width:34px;height:34px;border-radius:8px;background:var(--orange);display:flex;align-items:center;justify-content:center;color:#fff}
+  .top h1{font-size:18px;margin:0;font-weight:600}
+  .top .sub{font-size:12px;color:var(--t2)}
+  .btn{margin-left:auto;font-size:13px;padding:7px 12px;border:1px solid var(--bd);background:var(--card);border-radius:8px;cursor:pointer;font-family:var(--font)}
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:22px}
+  .stat{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:13px 15px}
+  .stat .n{font-size:26px;font-weight:600} .stat .l{font-size:12px;color:var(--t1);margin-top:2px}
+  .stat.accent{background:var(--orange-bg);border-color:transparent}
+  .stat.accent .n,.stat.accent .l{color:var(--orange-d)}
+  h2{font-size:14px;font-weight:600;margin:24px 0 10px;display:flex;align-items:center;gap:7px}
+  .count{font-size:12px;color:var(--t2);font-weight:400}
+  .card{background:var(--card);border:1px solid var(--bd);border-radius:12px;margin-bottom:9px;overflow:hidden}
+  .row{display:flex;align-items:center;gap:11px;padding:12px 14px;cursor:pointer}
+  .row:hover{background:#faf9f7}
+  .row .nm{font-size:14px;font-weight:500} .row .meta{font-size:12px;color:var(--t2);margin-top:1px}
+  .chip{font-size:11px;padding:2px 8px;border-radius:9px;background:var(--bg);white-space:nowrap}
+  .chip.sent{background:var(--green-bg);color:var(--green)}
+  .chip.src{background:var(--orange-bg);color:var(--orange-d)}
+  .who{font-size:10px;padding:2px 7px;border-radius:9px;white-space:nowrap;display:inline-flex;align-items:center;gap:3px}
+  .who.ava{background:var(--orange-bg);color:var(--orange-d)} .who.you{background:#1a1a1a;color:#fff}
+  .who.looper{background:var(--purple-bg);color:var(--purple)} .who.crew{background:var(--bg);color:var(--t1)} .who.browser{background:var(--coral-bg);color:var(--coral)}
+  .auto.api{color:var(--green)} .auto.manual{color:var(--purple)} .auto.browser{color:var(--coral)}
+  .steps{padding:4px 14px 14px;border-top:1px solid var(--bd);display:none}
+  .steps.open{display:block}
+  .step{font-size:13px;padding:8px 0;border-bottom:1px solid var(--bd)}
+  .step:last-child{border-bottom:none}
+  .empty{color:var(--t2);font-size:13px;padding:14px;text-align:center}
+  .msg{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:24px;text-align:center;color:var(--t1)}
+  a{color:var(--orange-d)}
+  @media(max-width:560px){.stats{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div class="logo"><i class="ti ti-robot" style="font-size:20px"></i></div>
+    <div><h1>Playbooks Admin</h1><div class="sub" id="updated">Loading…</div></div>
+    <button class="btn" onclick="load()"><i class="ti ti-refresh" style="font-size:14px;vertical-align:-2px"></i> Refresh</button>
+  </div>
+  <div id="body"><div class="msg">Loading…</div></div>
+</div>
+<script>
+  var ADMIN_ENDPOINT='https://somgalhkmptkclgvxhca.supabase.co/functions/v1/playbook-admin';
+  var TOKEN=new URLSearchParams(location.search).get('token')||'';
+  var OWN={ava:'Ava',you:'You',crew:'Crew',looper:'Looper',browser:'Browser'};
+  var AUT={api:'API',browser:'Browser',manual:'Backfill'};
+  function esc(s){return (s==null?'':String(s)).replace(/[&<>"]/g,function(c){return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c];});}
+  function whoLabel(k){if(OWN[k])return OWN[k];if(k&&k.indexOf('tm_')===0){var n=k.slice(3).replace(/_/g,' ');return n.charAt(0).toUpperCase()+n.slice(1);}return k||'?';}
+  function whoCls(k){return (k==='ava'||k==='you'||k==='looper'||k==='browser')?k:'crew';}
+  function ago(t){var d=(Date.now()-new Date(t).getTime())/1000;if(d<60)return 'just now';if(d<3600)return Math.floor(d/60)+'m ago';if(d<86400)return Math.floor(d/3600)+'h ago';return Math.floor(d/86400)+'d ago';}
+  function stepsHtml(steps){return (steps||[]).map(function(s,i){
+    var sys=(s.systems||[]).map(function(x){return '<span class="chip">'+esc(x)+'</span>';}).join(' ');
+    return '<div class="step"><div style="display:flex;align-items:center;gap:8px"><span style="color:var(--t2);width:14px;font-size:11px">'+(i+1)+'</span><span style="flex:1">'+esc(s.text)+'</span><span class="who '+whoCls(s.who)+'">'+esc(whoLabel(s.who))+'</span></div><div style="margin-top:5px;display:flex;align-items:center;gap:7px;flex-wrap:wrap;padding-left:22px">'+sys+(s.auto?'<span class="chip auto '+s.auto+'" style="font-weight:500">'+(AUT[s.auto]||s.auto)+'</span>':'')+(s.note?'<span style="font-size:11px;color:var(--t2)">'+esc(s.note)+'</span>':'')+'</div></div>';
+  }).join('');}
+  function toggle(id){var e=document.getElementById(id);if(e)e.classList.toggle('open');}
+  function render(d){
+    var drafts=d.drafts||[],reqs=d.requests||[];
+    var sentFromBuilt=drafts.filter(function(x){return x.requested;}).length;
+    var emails={};reqs.forEach(function(r){if(r.email)emails[r.email.toLowerCase()]=1;});
+    var dayAgo=Date.now()-86400000;
+    var built24=drafts.filter(function(x){return new Date(x.created_at).getTime()>dayAgo;}).length;
+    var h='<div class="stats">'
+      +'<div class="stat accent"><div class="n">'+drafts.length+'</div><div class="l">playbooks built</div></div>'
+      +'<div class="stat"><div class="n">'+reqs.length+'</div><div class="l">sent to you</div></div>'
+      +'<div class="stat"><div class="n">'+Object.keys(emails).length+'</div><div class="l">unique leads</div></div>'
+      +'<div class="stat"><div class="n">'+built24+'</div><div class="l">built last 24h</div></div></div>';
+
+    h+='<h2><i class="ti ti-mail" style="color:var(--green)"></i> Sent to you <span class="count">'+reqs.length+'</span></h2>';
+    if(!reqs.length)h+='<div class="empty">No one has sent a design yet.</div>';
+    reqs.forEach(function(r,i){
+      h+='<div class="card"><div class="row" onclick="toggle(\'r'+i+'\')"><div style="flex:1"><div class="nm">'+esc(r.name||'Untitled')+'</div><div class="meta">'+esc(r.requester_name||'no name')+(r.email?' · '+esc(r.email):'')+' · '+ago(r.created_at)+'</div></div><span class="chip">'+(r.step_count||((r.steps||[]).length))+' steps</span>'+((r.needs_backfill)?'<span class="chip" style="color:var(--purple)">'+r.needs_backfill+' backfill</span>':'')+'<i class="ti ti-chevron-down" style="color:var(--t2)"></i></div><div class="steps" id="r'+i+'">'+stepsHtml(r.steps)+'</div></div>';
+    });
+
+    h+='<h2><i class="ti ti-pencil" style="color:var(--orange-d)"></i> Everything built <span class="count">'+drafts.length+'</span></h2>';
+    if(!drafts.length)h+='<div class="empty">Nothing built yet — share the link!</div>';
+    drafts.forEach(function(p,i){
+      h+='<div class="card"><div class="row" onclick="toggle(\'d'+i+'\')"><div style="flex:1"><div class="nm">'+esc(p.name||'Untitled')+'</div><div class="meta">'+(p.source?'<span class="chip src" style="margin-right:6px">'+esc(p.source)+'</span>':'')+(p.tools&&p.tools.length?esc(p.tools.join(', '))+' · ':'')+ago(p.updated_at||p.created_at)+'</div></div>'+(p.requested?'<span class="chip sent">sent ✓</span>':'')+'<span class="chip">'+((p.steps||[]).length)+' steps</span><i class="ti ti-chevron-down" style="color:var(--t2)"></i></div><div class="steps" id="d'+i+'">'+stepsHtml(p.steps)+'</div></div>';
+    });
+    document.getElementById('body').innerHTML=h;
+    document.getElementById('updated').textContent='Updated '+new Date().toLocaleTimeString();
+  }
+  async function load(){
+    if(!TOKEN){document.getElementById('body').innerHTML='<div class="msg">Add your access token to the URL:<br><code>?token=YOUR_TOKEN</code></div>';return;}
+    try{
+      var r=await fetch(ADMIN_ENDPOINT+'?token='+encodeURIComponent(TOKEN));
+      if(r.status===403){document.getElementById('body').innerHTML='<div class="msg">That token isn\'t right. Check the link.</div>';return;}
+      var d=await r.json();render(d);
+    }catch(e){document.getElementById('body').innerHTML='<div class="msg">Couldn\'t load — try Refresh.</div>';}
+  }
+  load();setInterval(load,30000);
+</script>
+</body>
+</html>
