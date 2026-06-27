@@ -44,8 +44,23 @@
 
   <div class="body">
 
+    <!-- INTRO -->
+    <div class="scr on" id="intro">
+      <div class="pad" style="padding-top:26px;text-align:center">
+        <div style="width:56px;height:56px;border-radius:15px;background:var(--info);display:flex;align-items:center;justify-content:center;margin:0 auto 14px"><i class="ti ti-robot" style="font-size:31px;color:#fff"></i></div>
+        <div style="font-size:23px;font-weight:600">Ava Playbooks</div>
+        <div style="font-size:14px;color:var(--t1);margin-top:7px;line-height:1.55">Get the admin off your plate. Tell Ava the jobs that eat your week, and she builds a step-by-step automation — a <b>playbook</b> — in seconds.</div>
+      </div>
+      <div class="pad" style="padding-top:8px">
+        <div class="card" style="padding:12px;margin-bottom:9px;display:flex;align-items:center;gap:12px"><div style="width:26px;height:26px;border-radius:50%;background:var(--info-bg);color:var(--info);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600">1</div><div style="flex:1;font-size:13px">Tell Ava which software you use</div></div>
+        <div class="card" style="padding:12px;margin-bottom:9px;display:flex;align-items:center;gap:12px"><div style="width:26px;height:26px;border-radius:50%;background:var(--info-bg);color:var(--info);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600">2</div><div style="flex:1;font-size:13px">Say what you want off your plate — or tap an example</div></div>
+        <div class="card" style="padding:12px;margin-bottom:9px;display:flex;align-items:center;gap:12px"><div style="width:26px;height:26px;border-radius:50%;background:var(--info-bg);color:var(--info);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600">3</div><div style="flex:1;font-size:13px">Ava builds it — who does each step, what's automated. Tweak it, then send it to us to build.</div></div>
+        <button class="btn pri full" style="padding:12px 0;margin-top:16px" onclick="goIn()">Let's go <i class="ti ti-arrow-right" style="font-size:14px"></i></button>
+      </div>
+    </div>
+
     <!-- LIST -->
-    <div class="scr on" id="list">
+    <div class="scr" id="list">
       <div class="pad">
         <div id="toolsummary"></div>
         <div class="card pri" style="background:var(--info-bg);border:none;padding:14px;cursor:pointer;border-radius:12px;margin-bottom:18px" onclick="startNew()">
@@ -307,6 +322,9 @@
     return {name:nm,trig:'',status:'draft',steps:[{kind:'action',text:'Watch for when this should happen',who:'ava'},{kind:'action',text:'Do the routine part automatically',who:'ava'},{kind:'action',text:'Hand the tricky bits to a person',who:'looper'}]};}
   var DRAFT_ENDPOINT='https://somgalhkmptkclgvxhca.supabase.co/functions/v1/playbook-draft';
   var SAVE_ENDPOINT='https://somgalhkmptkclgvxhca.supabase.co/functions/v1/playbook-save';
+  var VIEW_ENDPOINT='https://somgalhkmptkclgvxhca.supabase.co/functions/v1/playbook-view';
+  var logged=false;
+  function goIn(){if(!logged){logged=true;try{fetch(VIEW_ENDPOINT,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({referrer:document.referrer,ua:navigator.userAgent})});}catch(e){}}show('list');}
   function uuid(){try{return crypto.randomUUID();}catch(e){return 'id-'+Date.now()+'-'+Math.random().toString(16).slice(2);}}
   function saveDraft(source){var p=mine[cur];if(!p)return;if(!p.id)p.id=uuid();try{fetch(SAVE_ENDPOINT,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({id:p.id,name:p.name,trigger:p.trig,steps:p.steps,tools:selectedKeys(),source:source||'edit',requested:!!p.requested})});}catch(e){}}
   function openDraft(p){mine.push(p);cur=mine.length-1;renderBuilder();hideFollowup();show('builder');}
