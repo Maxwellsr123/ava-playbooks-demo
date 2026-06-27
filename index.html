@@ -102,7 +102,8 @@
       <div class="pad" style="display:flex;align-items:center;gap:8px"><i class="ti ti-chevron-left" style="font-size:20px;cursor:pointer;color:var(--t1)" onclick="show('list')"></i><div style="flex:1"><span class="h" id="btitle">Playbook</span><div style="font-size:12px;color:var(--t2)">Add, reorder or edit the steps</div></div></div>
       <div class="pad" style="padding-top:0">
         <div class="card" style="padding:10px 12px;margin-bottom:10px;display:flex;align-items:center;gap:9px;cursor:pointer" onclick="editTrigger()"><i class="ti ti-clock" style="color:var(--t1)"></i><div style="flex:1;font-size:13px" id="btrig">When…</div><i class="ti ti-pencil" style="color:var(--t2);font-size:14px"></i></div>
-        <div style="display:flex;gap:7px;margin-bottom:12px"><input id="repromptin" class="in" placeholder="Ask Ava to change it… e.g. use Outlook, add a credit check" style="flex:1" onkeydown="if(event.key==='Enter')reprompt('repromptin')" /><button class="btn pri" style="padding:0 14px" onclick="reprompt('repromptin')"><i class="ti ti-robot" style="font-size:18px"></i></button></div>
+        <div id="avahint" style="margin-bottom:10px;display:none"></div>
+        <div style="display:flex;gap:7px;margin-bottom:12px"><input id="repromptin" class="in" placeholder="Tell Ava more, or ask for changes…" style="flex:1" onkeydown="if(event.key==='Enter')reprompt('repromptin')" /><button class="btn pri" style="padding:0 14px" onclick="reprompt('repromptin')"><i class="ti ti-robot" style="font-size:18px"></i></button></div>
         <div id="bsteps"></div>
         <button class="btn full" style="padding:9px 0;margin-top:4px" onclick="addStepBtn()"><i class="ti ti-plus" style="font-size:13px"></i> Add a step</button>
         <div style="display:flex;gap:7px;margin-top:8px"><input id="repromptin2" class="in" placeholder="…or just ask Ava to change it" style="flex:1" onkeydown="if(event.key==='Enter')reprompt('repromptin2')" /><button class="btn pri" style="padding:0 14px" onclick="reprompt('repromptin2')"><i class="ti ti-robot" style="font-size:18px"></i></button></div>
@@ -298,27 +299,29 @@
     var nm=d.length>32?firstCap(d).slice(0,30)+'…':firstCap(d);
     return {name:nm,trig:'',status:'draft',steps:[{kind:'action',text:'Watch for when this should happen',who:'ava'},{kind:'action',text:'Do the routine part automatically',who:'ava'},{kind:'action',text:'Hand the tricky bits to a person',who:'looper'}]};}
   var DRAFT_ENDPOINT='https://somgalhkmptkclgvxhca.supabase.co/functions/v1/playbook-draft';
-  function openDraft(p){mine.push(p);cur=mine.length-1;renderBuilder();show('builder');}
+  function openDraft(p){mine.push(p);cur=mine.length-1;renderBuilder();hideFollowup();show('builder');}
   var chatMsgs=[];
-  function startChat(){chatMsgs=[{role:'assistant',content:"What's eating up your time? Tell me what you'd love off your plate — I'll ask a couple of quick questions, then build you a playbook."}];renderChat();var i=document.getElementById('chatin');if(i)i.value='';}
-  function renderChat(){var el=document.getElementById('chatlog');if(!el)return;el.innerHTML=chatMsgs.map(function(m){if(m.role==='assistant')return '<div style="align-self:flex-start;max-width:86%;background:var(--bg1);border-radius:13px 13px 13px 3px;padding:9px 12px;font-size:13px">'+(m.content==='…'?'<span style="color:var(--t2)">Ava is typing…</span>':esc(m.content))+'</div>';return '<div style="align-self:flex-end;max-width:86%;background:var(--info);color:#fff;border-radius:13px 13px 3px 13px;padding:9px 12px;font-size:13px">'+esc(m.content)+'</div>';}).join('');window.scrollTo(0,document.body.scrollHeight);}
+  function startChat(){chatMsgs=[{role:'assistant',content:"What's eating up your time? Give me the gist in a line — I'll build you a first cut in seconds, then we'll sharpen it together."}];renderChat();var i=document.getElementById('chatin');if(i)i.value='';}
+  function renderChat(){var el=document.getElementById('chatlog');if(!el)return;el.innerHTML=chatMsgs.map(function(m){if(m.role==='assistant')return '<div style="align-self:flex-start;max-width:86%;background:var(--bg1);border-radius:13px 13px 13px 3px;padding:9px 12px;font-size:13px">'+(m.content==='…'?'<span style="color:var(--t2)">Ava is building…</span>':esc(m.content))+'</div>';return '<div style="align-self:flex-end;max-width:86%;background:var(--info);color:#fff;border-radius:13px 13px 3px 13px;padding:9px 12px;font-size:13px">'+esc(m.content)+'</div>';}).join('');window.scrollTo(0,document.body.scrollHeight);}
   async function chatSend(){
     var inp=document.getElementById('chatin');var t=(inp.value||'').trim();if(!t)return;
     chatMsgs.push({role:'user',content:t});inp.value='';chatMsgs.push({role:'assistant',content:'…'});renderChat();
     try{
-      var send=chatMsgs.filter(function(m){return m.content!=='…';});
-      var r=await fetch(DRAFT_ENDPOINT,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({messages:send,tools:selectedKeys().map(function(k){return {key:k,label:toolMeta(k).label};})})});
-      var j=await r.json();
-      chatMsgs.pop();
-      if(j.question){chatMsgs.push({role:'assistant',content:j.question});renderChat();}
-      else if(j.playbook){
+      var r=await fetch(DRAFT_ENDPOINT,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({description:t,tools:selectedKeys().map(function(k){return {key:k,label:toolMeta(k).label};})})});
+      var j=await r.json();chatMsgs.pop();
+      if(j.playbook){
         var pb=j.playbook;
         var steps=pb.steps.map(function(s){return {kind:'action',text:s.text,who:(WHO[s.owner]?s.owner:'ava'),systems:(Array.isArray(s.systems)?s.systems:[]),auto:s.automation,note:s.note};});
-        var desc=chatMsgs.filter(function(m){return m.role==='user';}).map(function(m){return m.content;}).join(' / ');
-        openDraft({name:pb.name||'New playbook',trig:pb.trigger||'',status:'draft',steps:steps,desc:desc});
-        say('Ava built your playbook — tweak it or ask for changes');
-      } else {chatMsgs.push({role:'assistant',content:"Hmm, I didn't catch that — try again?"});renderChat();}
-    }catch(e){chatMsgs.pop();chatMsgs.push({role:'assistant',content:"I couldn't reach the server — give it another go in a sec."});renderChat();}
+        openDraft({name:pb.name||'New playbook',trig:pb.trigger||'',status:'draft',steps:steps,desc:t});
+        setFollowup(j.followup);say('Quick draft ready ✓');
+      } else {chatMsgs.push({role:'assistant',content:"Hmm, didn't catch that — try again?"});renderChat();}
+    }catch(e){chatMsgs.pop();chatMsgs.push({role:'assistant',content:"Couldn't reach the server — give it another go."});renderChat();}
+  }
+  function hideFollowup(){var e=document.getElementById('avahint');if(e)e.style.display='none';}
+  function setFollowup(q){
+    var el=document.getElementById('avahint');if(!el)return;el.style.display='block';
+    if(q&&q.trim()){el.innerHTML='<div style="background:var(--info-bg);border-radius:10px;padding:10px 12px;display:flex;gap:8px;align-items:flex-start"><i class="ti ti-robot" style="font-size:17px;color:var(--info)"></i><div style="font-size:12px;color:var(--info)"><b>I can do better than that.</b> '+esc(q)+' <span style="opacity:.85">Tell me below 👇</span></div></div>';}
+    else{el.innerHTML='<div style="background:var(--green-bg);border-radius:10px;padding:10px 12px;display:flex;gap:8px;align-items:center"><i class="ti ti-circle-check" style="font-size:17px;color:var(--green)"></i><div style="font-size:12px;color:var(--green)">Looking solid — tweak anything, or request it.</div></div>';}
   }
   async function draftFromDescription(){
     var d=(document.getElementById('desc').value||'').trim();
@@ -339,8 +342,8 @@
       say('Offline — used a quick draft');
     }finally{ btn.disabled=false;btn.innerHTML=old; }
   }
-  function createPb(){var n=(document.getElementById('pbname').value||'').trim();if(!n){say('Give it a name first');return;}var t=(document.getElementById('pbtrig').value||'').trim();mine.push({name:n,trig:t,steps:[],status:'draft'});cur=mine.length-1;renderBuilder();show('builder');}
-  function openMine(i){cur=i;renderBuilder();show('builder');}
+  function createPb(){var n=(document.getElementById('pbname').value||'').trim();if(!n){say('Give it a name first');return;}var t=(document.getElementById('pbtrig').value||'').trim();mine.push({name:n,trig:t,steps:[],status:'draft'});cur=mine.length-1;renderBuilder();hideFollowup();show('builder');}
+  function openMine(i){cur=i;renderBuilder();hideFollowup();show('builder');}
   function editTrigger(){var p=mine[cur];var v=window.prompt('When should it run?',p.trig||'');if(v!==null){p.trig=v.trim();renderBuilder();}}
 
   function renderBuilder(){
@@ -388,7 +391,7 @@
       var pb=j.playbook;
       p.name=pb.name||p.name;p.trig=pb.trigger||p.trig;
       p.steps=pb.steps.map(function(s){return {kind:'action',text:s.text,who:(WHO[s.owner]?s.owner:'ava'),systems:(Array.isArray(s.systems)?s.systems:[]),auto:s.automation,note:s.note};});
-      renderBuilder();
+      renderBuilder();setFollowup(j.followup);
       var a=document.getElementById('repromptin');if(a)a.value='';var b=document.getElementById('repromptin2');if(b)b.value='';
       say('Ava updated it');
     }catch(e){say('Couldn\'t reach Ava — try again');}
