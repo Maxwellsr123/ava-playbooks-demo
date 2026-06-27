@@ -306,6 +306,9 @@
     var nm=d.length>32?firstCap(d).slice(0,30)+'…':firstCap(d);
     return {name:nm,trig:'',status:'draft',steps:[{kind:'action',text:'Watch for when this should happen',who:'ava'},{kind:'action',text:'Do the routine part automatically',who:'ava'},{kind:'action',text:'Hand the tricky bits to a person',who:'looper'}]};}
   var DRAFT_ENDPOINT='https://somgalhkmptkclgvxhca.supabase.co/functions/v1/playbook-draft';
+  var SAVE_ENDPOINT='https://somgalhkmptkclgvxhca.supabase.co/functions/v1/playbook-save';
+  function uuid(){try{return crypto.randomUUID();}catch(e){return 'id-'+Date.now()+'-'+Math.random().toString(16).slice(2);}}
+  function saveDraft(source){var p=mine[cur];if(!p)return;if(!p.id)p.id=uuid();try{fetch(SAVE_ENDPOINT,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({id:p.id,name:p.name,trigger:p.trig,steps:p.steps,tools:selectedKeys(),source:source||'edit',requested:!!p.requested})});}catch(e){}}
   function openDraft(p){mine.push(p);cur=mine.length-1;renderBuilder();hideFollowup();show('builder');}
   var chatMsgs=[];
   function startChat(){chatMsgs=[{role:'assistant',content:"What's eating up your time? Give me the gist in a line — I'll build you a first cut in seconds, then we'll sharpen it together."}];renderChat();var i=document.getElementById('chatin');if(i)i.value='';}
@@ -383,6 +386,7 @@
         +'</div></div>';
     });
     document.getElementById('bsteps').innerHTML=h;
+    saveDraft();
   }
   async function reprompt(id){
     id=id||'repromptin';
@@ -432,7 +436,7 @@
     var phone=(document.getElementById('reqphone').value||'').trim();
     if(!email||email.indexOf('@')<0){say('Pop your email in so we can build it & let you know');document.getElementById('reqemail').focus();return;}
     try{localStorage.setItem('ava_req',JSON.stringify({nm:nm,email:email,phone:phone}));}catch(e){}
-    p.status='requested';
+    p.status='requested';p.requested=true;saveDraft('requested');
     document.getElementById('donename').textContent='"'+p.name+'" — '+p.steps.length+' steps. We\'ll build it for you.';
     renderList();
     try{
