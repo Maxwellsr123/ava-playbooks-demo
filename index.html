@@ -5,50 +5,59 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
 <title>Ava Playbooks — MVP</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.31.0/dist/tabler-icons.min.css" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700;800;900&display=swap" rel="stylesheet" />
 <style>
   :root{
-    --bg0:#fff; --bg1:#f3f2f0; --info-bg:#fce8d6; --warn-bg:#fff2ce; --purple-bg:#eeedfe; --coral-bg:#faece7; --green-bg:#e1f5ee; --danger-bg:#fcebeb;
-    --t0:#1a1a1a; --t1:#5f5e5b; --t2:#8f8e8a; --info:#f26a21; --warn:#8a6a00; --purple:#534ab7; --coral:#993c1d; --green:#0f6e56; --danger:#a32d2d;
-    --bd:rgba(0,0,0,0.10); --bd2:rgba(0,0,0,0.18); --font:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+    --bg0:#FAF8F4; --bg1:#EFEAE0; --info-bg:#FCE2D2; --warn-bg:#FFF2CC; --purple-bg:#E9E7FB; --coral-bg:#F7E6DE; --green-bg:#E2F1EA; --danger-bg:#FBE7E7;
+    --t0:#1A1A1A; --t1:#56544F; --t2:#8A877F; --info:#F26A21; --info-d:#D2530F; --yellow:#FFC400; --warn:#8a6a00; --purple:#534ab7; --coral:#993c1d; --green:#0f6e56; --danger:#a32d2d;
+    --bd:rgba(26,26,26,0.16); --bd2:rgba(26,26,26,0.34);
+    --font:'Barlow',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+    --head:'Barlow Condensed','Barlow',sans-serif;
+    --grid:repeating-linear-gradient(0deg,transparent 0 39px,rgba(40,80,140,.05) 39px 40px),repeating-linear-gradient(90deg,transparent 0 39px,rgba(40,80,140,.05) 39px 40px);
   }
-  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
-  body{margin:0;background:var(--bg1);font-family:var(--font);color:var(--t0);display:flex;justify-content:center;min-height:100vh;}
-  .phone{width:100%;max-width:420px;background:var(--bg0);min-height:100vh;display:flex;flex-direction:column;position:relative;box-shadow:0 0 0 1px var(--bd);}
-  @media(min-width:480px){.phone{margin:18px 0;min-height:auto;border-radius:26px;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,.12);}body{align-items:flex-start;}}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;border-radius:0 !important;}
+  body{margin:0;background:#1A1A1A;font-family:var(--font);color:var(--t0);display:flex;justify-content:center;min-height:100vh;font-weight:400;}
+  .phone{width:100%;max-width:420px;background:var(--bg0);background-image:var(--grid);min-height:100vh;display:flex;flex-direction:column;position:relative;box-shadow:0 0 0 1px #1A1A1A;}
+  @media(min-width:480px){.phone{margin:18px 0;min-height:auto;overflow:hidden;box-shadow:0 12px 50px rgba(0,0,0,.55),0 0 0 2px #1A1A1A;}body{align-items:flex-start;}}
   .statusbar{display:flex;justify-content:space-between;padding:8px 18px 4px;font-size:11px;color:var(--t2);}
-  .top{background:var(--info-bg);padding:11px 16px;display:flex;align-items:center;gap:8px;}
-  .body{flex:1;}
+  .top{background:#1A1A1A;padding:13px 16px;display:flex;align-items:center;gap:8px;}
+  .body{flex:1;position:relative;}
   .pad{padding:14px 16px;}
   .scr{display:none;} .scr.on{display:block;}
-  .h{font-size:17px;font-weight:600;} .h2{font-size:15px;font-weight:600;}
-  .lbl{font-size:12px;font-weight:600;color:var(--t1);margin:0 0 8px;}
-  .card{background:var(--bg0);border:1px solid var(--bd);border-radius:10px;}
-  .btn{font-size:13px;padding:7px 12px;border:1px solid var(--bd2);background:transparent;color:var(--t0);border-radius:8px;cursor:pointer;font-family:var(--font);}
-  .btn:active{transform:scale(.98);} .btn.pri{background:var(--info);color:#fff;border-color:var(--info);} .btn.sm{font-size:12px;padding:5px 10px;} .btn.full{width:100%;}
-  .chip{font-size:11px;padding:3px 9px;border-radius:9px;background:var(--bg1);}
-  input.in{width:100%;height:40px;border:1px solid var(--bd2);border-radius:8px;padding:0 12px;font-size:14px;font-family:var(--font);}
-  .who{display:inline-flex;align-items:center;gap:3px;font-size:10px;padding:2px 7px;border-radius:9px;white-space:nowrap;}
-  .who.ava{background:var(--info-bg);color:var(--info);} .who.you{background:#1a1a1a;color:#fff;}
-  .who.crew{background:var(--bg1);color:var(--t1);} .who.looper{background:var(--purple-bg);color:var(--purple);} .who.browser{background:var(--coral-bg);color:var(--coral);}
-  .pick{display:inline-flex;align-items:center;gap:4px;font-size:12px;padding:6px 11px;border-radius:14px;border:1px solid var(--bd2);cursor:pointer;color:var(--t1);white-space:nowrap;}
-  .pick.sel{background:var(--t0);color:#fff;border-color:var(--t0);}
-  .alert{position:fixed;left:50%;bottom:30px;transform:translateX(-50%) translateY(20px);opacity:0;background:var(--t0);color:#fff;font-size:13px;padding:9px 16px;border-radius:20px;max-width:340px;transition:.25s;pointer-events:none;z-index:50;text-align:center;}
+  .h{font-family:var(--head);font-weight:900;text-transform:uppercase;letter-spacing:.2px;line-height:.95;font-size:22px;}
+  .h2{font-family:var(--head);font-weight:800;text-transform:uppercase;letter-spacing:.2px;line-height:.95;font-size:17px;}
+  .lbl{display:inline-block;font-family:var(--head);font-size:13px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:#1A1A1A;background:var(--yellow);padding:3px 10px;margin:0 0 11px;transform:rotate(-1deg);}
+  .card{background:var(--bg0);border:1.5px solid var(--t0);}
+  .btn{font-family:var(--head);font-weight:700;text-transform:uppercase;letter-spacing:.4px;font-size:14px;padding:10px 14px;border:1.5px solid var(--t0);background:var(--bg0);color:var(--t0);cursor:pointer;}
+  .btn:active{transform:translate(1px,1px);} .btn.pri{background:var(--info);color:#fff;border-color:var(--t0);box-shadow:3px 3px 0 #1A1A1A;} .btn.sm{font-size:12px;padding:6px 10px;} .btn.full{width:100%;}
+  .chip{font-family:var(--head);font-weight:700;text-transform:uppercase;letter-spacing:.3px;font-size:11px;padding:4px 10px;background:var(--bg1);border:1px solid var(--bd);}
+  input.in{width:100%;height:42px;border:1.5px solid var(--t0);background:var(--bg0);padding:0 12px;font-size:14px;font-family:var(--font);color:var(--t0);}
+  input.in::placeholder{color:var(--t2);}
+  .who{display:inline-flex;align-items:center;gap:3px;font-family:var(--head);font-weight:700;text-transform:uppercase;letter-spacing:.3px;font-size:10px;padding:3px 7px;white-space:nowrap;}
+  .who.ava{background:var(--info);color:#fff;} .who.you{background:#1A1A1A;color:#fff;}
+  .who.crew{background:var(--bg1);color:var(--t1);border:1px solid var(--bd);} .who.looper{background:var(--purple);color:#fff;} .who.browser{background:var(--coral);color:#fff;}
+  .pick{display:inline-flex;align-items:center;gap:4px;font-family:var(--head);font-weight:600;text-transform:uppercase;letter-spacing:.3px;font-size:12px;padding:7px 11px;border:1.5px solid var(--t0);cursor:pointer;color:var(--t0);white-space:nowrap;background:var(--bg0);}
+  .pick.sel{background:var(--t0);color:#fff;}
+  .alert{position:fixed;left:50%;bottom:30px;transform:translateX(-50%) translateY(20px);opacity:0;background:#1A1A1A;color:#fff;font-family:var(--head);font-weight:600;text-transform:uppercase;letter-spacing:.4px;font-size:13px;padding:11px 18px;max-width:340px;transition:.25s;pointer-events:none;z-index:50;text-align:center;border:2px solid var(--info);}
   .alert.show{opacity:1;transform:translateX(-50%) translateY(0);}
-  .spin{display:inline-block;animation:spin 1s linear infinite;} @keyframes spin{to{transform:rotate(360deg);}}
+  .spin{display:inline-block;animation:spin 1s linear infinite;} @keyframes spin{to{transform:rotate(360deg) !important;}}
 </style>
 </head>
 <body>
 <div class="phone">
   <div class="statusbar"><span>9:41</span><span><i class="ti ti-wifi"></i> <i class="ti ti-battery-3"></i></span></div>
-  <div class="top"><i class="ti ti-robot" style="font-size:18px;color:var(--info)"></i><span style="font-weight:600;color:var(--info)">Ava Playbooks</span><span style="font-size:11px;color:var(--info);margin-left:auto">Elastic Admin</span></div>
+  <div class="top"><i class="ti ti-robot" style="font-size:18px;color:var(--info)"></i><span style="font-family:'Barlow Condensed',sans-serif;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:#fff">Ava Playbooks</span><span style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:.6px;color:var(--info);margin-left:auto">Elastic Admin</span></div>
 
   <div class="body">
 
     <!-- INTRO -->
     <div class="scr on" id="intro">
-      <div class="pad" style="padding-top:26px;text-align:center">
-        <div style="width:56px;height:56px;border-radius:15px;background:var(--info);display:flex;align-items:center;justify-content:center;margin:0 auto 14px"><i class="ti ti-robot" style="font-size:31px;color:#fff"></i></div>
-        <div style="font-size:23px;font-weight:600">Ava Playbooks</div>
+      <div aria-hidden="true" style="position:absolute;top:48px;left:0;width:100%;overflow:hidden;pointer-events:none;text-align:center;z-index:0"><span style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:18vw;text-transform:uppercase;color:var(--info);opacity:.06;line-height:.8;white-space:nowrap">PLAYBOOKS</span></div>
+      <div class="pad" style="padding-top:26px;text-align:center;position:relative;z-index:1">
+        <div style="width:58px;height:58px;background:var(--info);display:flex;align-items:center;justify-content:center;margin:0 auto 14px;box-shadow:4px 4px 0 #1A1A1A"><i class="ti ti-robot" style="font-size:31px;color:#fff"></i></div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:38px;font-weight:900;text-transform:uppercase;line-height:.9;letter-spacing:.3px">Ava Playbooks</div>
         <div style="font-size:14px;color:var(--t1);margin-top:7px;line-height:1.55">Get the admin off your plate. Tell Ava the jobs that eat your week, and she builds a step-by-step automation — a <b>playbook</b> — in seconds.</div>
       </div>
       <div class="pad" style="padding-top:10px">
