@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+<title>Ava — Hunt Mode preview</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.31.0/dist/tabler-icons.min.css" />
+<style>
+  :root{
+    --bg0:#ffffff; --bg1:#f0eee6; --bg2:#faf9f5;
+    --info-bg:#e6f1fb; --danger-bg:#fcebeb; --warn-bg:#faeeda; --purple-bg:#eeedfe; --coral:#993c1d; --coral-bg:#faece7;
+    --t0:#1a1a18; --t1:#57564f; --t2:#8a897f;
+    --info:#0c447c; --danger:#a32d2d; --warn:#633806; --purple:#534ab7;
+    --green:#1d9e75; --amber:#ef9f27; --red:#e24b4a; --pur:#7f77dd;
+    --bd:rgba(0,0,0,0.10); --bd2:rgba(0,0,0,0.18);
+    --font:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  body{margin:0; background:var(--bg1); font-family:var(--font); color:var(--t0);
+       display:flex; justify-content:center; min-height:100vh;}
+  .phone{width:100%; max-width:420px; background:var(--bg0); min-height:100vh;
+         display:flex; flex-direction:column; position:relative; box-shadow:0 0 0 1px var(--bd);}
+  @media(min-width:480px){ .phone{margin:18px 0; min-height:auto; border-radius:26px; overflow:hidden; box-shadow:0 8px 40px rgba(0,0,0,0.12);} body{align-items:flex-start;} }
+  .statusbar{display:flex; justify-content:space-between; padding:8px 18px 4px; font-size:11px; color:var(--t2);}
+  .body{flex:1; overflow-y:auto;}
+  .pad{padding:14px 16px;}
+  .scr{display:none;} .scr.on{display:block;}
+  .h{font-size:17px; font-weight:600;}
+  .lbl{font-size:12px; font-weight:600; color:var(--t1); margin:0 0 8px;}
+  .muted{color:var(--t2);} .sec2{color:var(--t1);}
+  .card{background:var(--bg0); border:1px solid var(--bd); border-radius:10px;}
+  .row{display:flex; align-items:center; gap:10px; padding:10px 12px; border-bottom:1px solid var(--bd);}
+  .row:last-child{border-bottom:none;}
+  .btn{font-size:13px; padding:6px 12px; border:1px solid var(--bd2); background:transparent; color:var(--t0);
+       border-radius:8px; cursor:pointer;} .btn:active{transform:scale(.98);}
+  .btn.pri{background:var(--info); color:#fff; border-color:var(--info);}
+  .btn.sm{font-size:12px; padding:4px 10px;}
+  .btn.full{width:100%;}
+  .chip{font-size:11px; padding:3px 9px; border-radius:9px; background:var(--bg1);}
+  .who{display:inline-flex; align-items:center; gap:3px; font-size:10px; padding:2px 7px; border-radius:9px; white-space:nowrap;}
+  .who.ava{background:#e1f5ee; color:#0F6E56;} .who.you{background:var(--info-bg); color:var(--info);}
+  .who.crew{background:var(--bg1); color:var(--t1);} .who.looper{background:var(--purple-bg); color:var(--purple);}
+  .who.browser{background:var(--coral-bg); color:var(--coral);}
+  .pick{display:inline-flex; align-items:center; gap:4px; font-size:12px; padding:6px 11px; border-radius:14px; border:1px solid var(--bd2); cursor:pointer; color:var(--t1); white-space:nowrap;}
+  .pick.sel{background:var(--t0); color:#fff; border-color:var(--t0);}
+  .dot{font-size:9px;} .tk{color:var(--green);}
+  .actionbar{display:flex; gap:6px;}
+  .header{background:var(--info-bg); padding:11px 16px; display:flex; align-items:center; gap:8px;}
+  .badge{font-size:10px; padding:2px 8px; border-radius:10px; background:var(--info); color:#fff; display:inline-flex; align-items:center; gap:3px;}
+  .nav{display:flex; align-items:flex-end; border-top:1px solid var(--bd); background:var(--bg0); padding-bottom:env(safe-area-inset-bottom,4px);}
+  .nav button{flex:1; text-align:center; padding:9px 0 7px; border:none; background:none; color:var(--t2); cursor:pointer; font-family:var(--font);}
+  .nav button.act{color:var(--info);}
+  .nav .navi{font-size:20px;} .nav .navt{font-size:10px; margin-top:1px;}
+  .fab{flex:1; display:flex; justify-content:center;}
+  .fab button{width:54px; height:54px; border-radius:50%; background:var(--info-bg); border:1px solid #b5d4f4; color:var(--info); margin-bottom:6px; cursor:pointer; display:flex; align-items:center; justify-content:center;}
+  .ava-card{background:var(--bg1); border-radius:10px; padding:10px 12px; display:flex; gap:9px; align-items:flex-start;}
+  .av{width:26px; height:26px; border-radius:50%; background:var(--bg1); display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:600;}
+  .alert{position:fixed; left:50%; bottom:80px; transform:translateX(-50%) translateY(20px); opacity:0;
+         background:var(--t0); color:#fff; font-size:13px; padding:9px 16px; border-radius:20px; max-width:340px;
+         transition:.25s; pointer-events:none; z-index:50; text-align:center;}
+  .alert.show{opacity:1; transform:translateX(-50%) translateY(0);}
+  input.ti-input{flex:1; height:38px; border:1px solid var(--bd2); border-radius:8px; padding:0 12px; font-size:14px; font-family:var(--font);}
+  .grid{display:grid; grid-template-columns:repeat(4,1fr); gap:9px 6px;}
+  .tile{text-align:center; cursor:pointer;}
+  .tile .ic{height:48px; border-radius:12px; background:var(--bg1); display:flex; align-items:center; justify-content:center; font-size:21px;}
+  .tile .tt{font-size:10px; margin-top:4px;}
+  .seg{display:flex; height:10px; border-radius:5px; overflow:hidden; margin:8px 0;}
+</style>
+</head>
+<body>
+<div class="phone">
+
+  <div class="statusbar"><span>9:41</span><span><i class="ti ti-wifi"></i> <i class="ti ti-battery-3"></i></span></div>
+
+  <div class="body">
+
+    <!-- HOME -->
+    <div class="scr on" id="home">
+      <div class="header"><i class="ti ti-robot" style="font-size:18px;color:var(--info)"></i><span style="font-weight:600;color:var(--info)">Ava</span><span class="badge"><i class="ti ti-crosshair"></i> Hunt mode</span><span style="font-size:11px;color:var(--info);margin-left:auto">always hunting</span></div>
+      <div class="pad">
+        <div style="font-size:12px;color:var(--t1)">Today's hunt <span id="hlive" style="font-size:10px;color:var(--t2)"></span></div>
+        <div style="display:flex;align-items:baseline;gap:7px"><span id="hfound" style="font-size:26px;font-weight:600">31</span><span style="font-size:13px;color:var(--t1)">tasks found</span></div>
+        <div class="seg" id="hseg"><div style="width:68%;background:var(--green)"></div><div style="width:26%;background:var(--pur)"></div><div style="width:6%;background:var(--amber)"></div></div>
+        <div style="display:flex;gap:12px;font-size:11px;color:var(--t1);margin-bottom:16px">
+          <span><i class="ti ti-circle-filled dot" style="color:var(--green)"></i> <span id="hava">21</span> by Ava</span>
+          <span><i class="ti ti-circle-filled dot" style="color:var(--pur)"></i> <span id="hloop">8</span> by Loopers</span>
+          <span><i class="ti ti-circle-filled dot" style="color:var(--amber)"></i> <span id="hyou">2</span> need you</span>
+        </div>
+
+        <p class="lbl">Needs your decision <span class="chip" id="cyou" style="background:var(--warn-bg);color:var(--warn)">2</span></p>
+        <div id="lyou">
+          <div class="card" style="border-left:3px solid var(--amber);border-radius:0 10px 10px 0;padding:10px 12px;margin-bottom:8px">
+            <div style="font-size:13px;margin-bottom:8px"><i class="ti ti-file-invoice" style="color:var(--warn)"></i> 2 invoices drafted — your OK to send</div>
+            <div class="actionbar"><button class="btn sm" style="flex:1" onclick="say('Approve and send the 2 invoices')">Approve</button><button class="btn sm" style="flex:1" onclick="go('invoicing')">Review</button></div>
+          </div>
+        </div>
+
+        <p class="lbl"><i class="ti ti-circle-filled dot" style="color:var(--green)"></i> Done by Ava <span class="muted">· <span id="cava">21</span></span></p>
+        <div class="card" id="lava" style="margin-bottom:14px">
+          <div class="row"><i class="ti ti-check" style="color:var(--green)"></i><span style="font-size:13px;flex:1">Replied to 12 customer emails</span></div>
+        </div>
+
+        <p class="lbl"><i class="ti ti-circle-filled dot" style="color:var(--pur)"></i> Handled by Loopers <span class="muted">· <span id="cloop">8</span></span></p>
+        <div class="card" id="lloop" style="margin-bottom:16px">
+          <div class="row"><i class="ti ti-user-check" style="color:var(--pur)"></i><span style="font-size:13px;flex:1">Entered 3 supplier bills in Xero</span></div>
+        </div>
+
+        <div class="ava-card"><i class="ti ti-crosshair" style="font-size:20px;color:var(--info)"></i><div style="flex:1;font-size:12px;color:var(--t1)">I've found more work that needs attention. Keep going?</div><button class="btn sm" onclick="say('Keep hunting, Ava')">Keep hunting</button></div>
+      </div>
+    </div>
+
+    <!-- WORK -->
+    <div class="scr" id="work">
+      <div class="pad"><span class="h">Work</span></div>
+      <div class="pad" style="padding-top:0">
+        <div class="card">
+          <div class="row" style="cursor:pointer" onclick="go('jobs')"><i class="ti ti-briefcase" style="color:var(--t1)"></i><div style="flex:1"><div style="font-size:14px">Jobs</div><div style="font-size:11px;color:var(--t2)">9 spotted · 6 booked</div></div><span class="chip" style="background:var(--danger-bg);color:var(--danger)">2</span><i class="ti ti-chevron-right" style="color:var(--t2)"></i></div>
+          <div class="row" style="cursor:pointer" onclick="go('invoicing')"><i class="ti ti-file-invoice" style="color:var(--t1)"></i><div style="flex:1"><div style="font-size:14px">Invoicing</div><div style="font-size:11px;color:var(--t2)">2 ready to send</div></div><span class="chip" style="background:var(--danger-bg);color:var(--danger)">2</span><i class="ti ti-chevron-right" style="color:var(--t2)"></i></div>
+          <div class="row" style="cursor:pointer" onclick="go('invoicing')"><i class="ti ti-receipt" style="color:var(--t1)"></i><div style="flex:1"><div style="font-size:14px">Bills</div><div style="font-size:11px;color:var(--t2)">14 captured this week</div></div><i class="ti ti-chevron-right" style="color:var(--t2)"></i></div>
+          <div class="row" style="cursor:pointer" onclick="say('Showing the calls Ava made')"><i class="ti ti-phone" style="color:var(--t1)"></i><div style="flex:1"><div style="font-size:14px">Calls</div><div style="font-size:11px;color:var(--t2)">18 placed · 16 connected</div></div><i class="ti ti-chevron-right" style="color:var(--t2)"></i></div>
+          <div class="row" style="cursor:pointer" onclick="say('Let''s build a quote')"><i class="ti ti-calculator" style="color:var(--t1)"></i><div style="flex:1"><div style="font-size:14px">Quotes</div><div style="font-size:11px;color:var(--t2)">3 sent this week</div></div><i class="ti ti-chevron-right" style="color:var(--t2)"></i></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- JOBS -->
+    <div class="scr" id="jobs">
+      <div class="pad" style="display:flex;align-items:center;gap:8px"><i class="ti ti-chevron-left" style="font-size:20px;cursor:pointer;color:var(--t1)" onclick="go('work')"></i><span class="h">Jobs</span><span style="font-size:12px;color:var(--t2);margin-left:auto">9 spotted · 6 booked</span></div>
+      <div class="pad" style="padding-top:0">
+        <p class="lbl">Needs a decision</p>
+        <div class="card" style="padding:10px 12px;margin-bottom:8px">
+          <div style="display:flex;gap:7px;align-items:center;margin-bottom:3px"><i class="ti ti-mail" style="color:var(--t1)"></i><span style="font-size:13px;font-weight:600">Mitre 10</span><span style="font-size:11px;color:var(--t2);margin-left:auto">2h ago</span></div>
+          <div style="font-size:12px;color:var(--t1);margin-bottom:8px">Leak at 12 Vine St · email</div>
+          <div class="actionbar"><button class="btn sm" style="flex:1" onclick="go('booking')">Book</button><button class="btn sm" style="flex:1" onclick="say('Dismissed Mitre 10')">Not a job</button></div>
+        </div>
+        <div class="card" style="padding:10px 12px;margin-bottom:16px">
+          <div style="display:flex;gap:7px;align-items:center;margin-bottom:3px"><i class="ti ti-phone" style="color:var(--t1)"></i><span style="font-size:13px;font-weight:600">R. Patel</span><span style="font-size:11px;color:var(--t2);margin-left:auto">yest.</span></div>
+          <div style="font-size:12px;color:var(--t1);margin-bottom:8px">Blocked drain, Glen Eden · call</div>
+          <div class="actionbar"><button class="btn sm" style="flex:1" onclick="go('booking')">Book</button><button class="btn sm" style="flex:1" onclick="say('Dismissed R. Patel')">Not a job</button></div>
+        </div>
+        <p class="lbl">Booked this week</p>
+        <div class="card">
+          <div class="row"><i class="ti ti-calendar-check" style="color:var(--green)"></i><div style="flex:1"><div style="font-size:13px">Hot water cylinder — Titirangi</div><div style="font-size:11px;color:var(--t2)">Fri · William</div></div></div>
+          <div class="row"><i class="ti ti-calendar-check" style="color:var(--green)"></i><div style="flex:1"><div style="font-size:13px">Bathroom rough-in — New Lynn</div><div style="font-size:11px;color:var(--t2)">Mon · Paul</div></div></div>
+          <div class="row"><i class="ti ti-calendar-check" style="color:var(--green)"></i><div style="flex:1"><div style="font-size:13px">Tap replacement — Avondale</div><div style="font-size:11px;color:var(--t2)">Tue · William</div></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BOOKING SHEET -->
+    <div class="scr" id="booking">
+      <div class="pad" style="display:flex;align-items:center;gap:8px"><i class="ti ti-chevron-left" style="font-size:20px;cursor:pointer;color:var(--t1)" onclick="go('jobs')"></i><span class="h">Book this job?</span></div>
+      <div class="pad" style="padding-top:0">
+        <div style="font-size:12px;color:var(--t2);margin-bottom:12px">Ava pulled this from the Mitre 10 email. Tap any field to fix it.</div>
+        <div class="card">
+          <div class="row"><i class="ti ti-user" style="color:var(--t1)"></i><div style="flex:1"><div style="font-size:11px;color:var(--t2)">Customer</div><div style="font-size:14px">Mitre 10 — Mega Henderson</div></div><i class="ti ti-pencil" style="color:var(--t2);font-size:14px"></i></div>
+          <div class="row"><i class="ti ti-map-pin" style="color:var(--t1)"></i><div style="flex:1"><div style="font-size:11px;color:var(--t2)">Site</div><div style="font-size:14px">12 Vine St, Henderson</div></div><i class="ti ti-pencil" style="color:var(--t2);font-size:14px"></i></div>
+          <div class="row"><i class="ti ti-tool" style="color:var(--t1)"></i><div style="flex:1"><div style="font-size:11px;color:var(--t2)">Job</div><div style="font-size:14px">Leak — investigate &amp; repair</div></div><i class="ti ti-pencil" style="color:var(--t2);font-size:14px"></i></div>
+          <div class="row"><i class="ti ti-clock" style="color:var(--t1)"></i><div style="flex:1"><div style="font-size:11px;color:var(--t2)">Ava suggests</div><div style="font-size:14px">Tomorrow 8:00am <span style="font-size:11px;color:var(--t2)">· first free slot</span></div></div><i class="ti ti-pencil" style="color:var(--t2);font-size:14px"></i></div>
+          <div class="row"><i class="ti ti-user-check" style="color:var(--t1)"></i><div style="flex:1"><div style="font-size:11px;color:var(--t2)">Assign to</div><div style="font-size:14px">William <span style="font-size:11px;color:var(--t2)">· nearest, free</span></div></div><i class="ti ti-pencil" style="color:var(--t2);font-size:14px"></i></div>
+        </div>
+        <div style="display:flex;gap:8px;background:var(--warn-bg);border-radius:8px;padding:9px 11px;margin-top:12px"><i class="ti ti-plug-connected-x" style="color:var(--warn);margin-top:1px"></i><div style="font-size:12px;color:var(--warn)">Fergus is disconnected — Ava will save this now and push it across the moment you reconnect.</div></div>
+        <button class="btn pri full" style="margin-top:14px;padding:11px 0" onclick="say('Booked ✓ saved now, will sync to Fergus on reconnect');go('home')">Confirm booking</button>
+        <button class="btn full" style="margin-top:8px" onclick="say('Opening editable booking')">Edit first</button>
+      </div>
+    </div>
+
+    <!-- INVOICING -->
+    <div class="scr" id="invoicing">
+      <div class="pad" style="display:flex;align-items:center;gap:8px"><i class="ti ti-chevron-left" style="font-size:20px;cursor:pointer;color:var(--t1)" onclick="go('work')"></i><span class="h">Invoicing</span></div>
+      <div class="pad" style="padding-top:0">
+        <div style="font-size:11px;color:var(--t2);margin-bottom:12px"><i class="ti ti-info-circle"></i> Dollar amounts live in Xero &amp; Fergus</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
+          <div style="background:var(--bg1);border-radius:8px;padding:11px"><div style="font-size:11px;color:var(--t1)">Invoices done</div><div style="font-size:20px;font-weight:600">6</div></div>
+          <div style="background:var(--bg1);border-radius:8px;padding:11px"><div style="font-size:11px;color:var(--t1)">Bills captured</div><div style="font-size:20px;font-weight:600">14</div></div>
+        </div>
+        <p class="lbl">Invoices</p>
+        <div class="card" style="margin-bottom:16px">
+          <div class="row"><span style="font-size:13px;flex:1">Drafting</span><span style="font-size:12px;color:var(--t2)">1</span></div>
+          <div class="row"><span style="font-size:13px;flex:1">With crew to check</span><span style="font-size:12px;color:var(--t2)">1</span></div>
+          <div class="row" style="background:var(--danger-bg)"><span style="font-size:13px;flex:1;color:var(--danger)">Ready to send</span><span style="font-size:12px;color:var(--danger)">2</span><button class="btn sm" onclick="say('Approved &amp; sent 2 invoices')">Approve</button></div>
+          <div class="row"><span style="font-size:13px;flex:1">Sent</span><span style="font-size:12px;color:var(--t2)">6</span></div>
+        </div>
+        <p class="lbl">Bills captured</p>
+        <div class="card">
+          <div class="row"><i class="ti ti-receipt" style="color:var(--t1)"></i><span style="font-size:13px;flex:1">Plumbing World</span><span style="font-size:11px;color:var(--t2)">Mon · in Xero</span></div>
+          <div class="row"><i class="ti ti-receipt" style="color:var(--t1)"></i><span style="font-size:13px;flex:1">Mico</span><span style="font-size:11px;color:var(--t2)">Mon · in Xero</span></div>
+          <div class="row"><i class="ti ti-receipt" style="color:var(--t1)"></i><span style="font-size:13px;flex:1">Z Energy fuel</span><span style="font-size:11px;color:var(--t2)">Tue · in Xero</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BLOCKERS -->
+    <div class="scr" id="blockers">
+      <div class="pad"><span class="h">Blockers</span><div style="font-size:12px;color:var(--t2)">Where work gets stuck — roadblocks, not blame</div></div>
+      <div class="pad" style="padding-top:0">
+        <div style="display:flex;align-items:baseline;gap:6px;margin-bottom:8px"><span style="font-size:13px;color:var(--t1)">247 this week</span></div>
+        <div style="display:flex;height:10px;border-radius:5px;overflow:hidden;margin:0 0 8px"><div style="width:38%;background:var(--green)"></div><div style="width:22%;background:#378ADD"></div><div style="width:18%;background:var(--pur)"></div><div style="width:7%;background:#888780"></div><div style="width:15%;background:var(--red)"></div></div>
+        <div style="display:flex;gap:9px;flex-wrap:wrap;font-size:11px;color:var(--t1);margin-bottom:14px">
+          <span><i class="ti ti-circle-filled dot" style="color:var(--green)"></i> 94 automated</span>
+          <span><i class="ti ti-circle-filled dot" style="color:#378ADD"></i> 54 browser</span>
+          <span><i class="ti ti-circle-filled dot" style="color:var(--pur)"></i> 44 Loopers</span>
+          <span><i class="ti ti-circle-filled dot" style="color:#888780"></i> 17 staff</span>
+          <span><i class="ti ti-circle-filled dot" style="color:var(--red)"></i> 38 unassigned</span>
+        </div>
+        <div style="display:flex;gap:6px;overflow-x:auto;margin-bottom:14px;padding-bottom:2px">
+          <span class="chip" style="background:var(--t0);color:#fff;white-space:nowrap">All</span>
+          <span class="chip" style="background:var(--danger-bg);color:var(--danger);white-space:nowrap">Unassigned 38</span>
+          <span class="chip" style="white-space:nowrap">You</span>
+          <span class="chip" style="white-space:nowrap">Loopers</span>
+          <span class="chip" style="white-space:nowrap">Browser</span>
+        </div>
+        <p class="lbl">By task type</p>
+        <div class="card" style="margin-bottom:8px">
+          <div class="row"><i class="ti ti-calendar-check" style="color:var(--t1)"></i><div style="flex:1"><div style="font-size:13px">Booking confirmations <span style="color:var(--t2)">· 42</span></div><div style="font-size:11px;color:var(--t2)">38 browser · 4 unassigned · avg 5h</div></div><button class="btn sm" onclick="go('sops')"><i class="ti ti-bolt" style="font-size:12px"></i> Automate</button></div>
+          <div class="row"><i class="ti ti-receipt" style="color:var(--t1)"></i><div style="flex:1"><div style="font-size:13px">Supplier bill entry <span style="color:var(--t2)">· 35</span></div><div style="font-size:11px;color:var(--t2)">20 Loopers · 15 browser</div></div><button class="btn sm" onclick="go('sops')"><i class="ti ti-bolt" style="font-size:12px"></i> Automate</button></div>
+          <div class="row"><i class="ti ti-folder" style="color:var(--t1)"></i><div style="flex:1"><div style="font-size:13px">Document filing <span style="color:var(--t2)">· 30</span></div><div style="font-size:11px;color:var(--t2)">30 automated · avg 2m</div></div><span class="chip" style="color:#0F6E56;cursor:pointer" onclick="go('sops')"><i class="ti ti-bolt" style="font-size:12px"></i> SOP</span></div>
+          <div class="row"><i class="ti ti-calculator" style="color:var(--t1)"></i><div style="flex:1"><div style="font-size:13px">Quote follow-ups <span style="color:var(--t2)">· 22</span></div><div style="font-size:11px;color:var(--t2)">14 staff · 8 unassigned · avg 9h</div></div><button class="btn sm" onclick="say('Allocate unassigned quote follow-ups')">Allocate</button></div>
+          <div class="row"><i class="ti ti-message-question" style="color:var(--t1)"></i><div style="flex:1"><div style="font-size:13px">Missing-info chases <span style="color:var(--t2)">· 18</span></div><div style="font-size:11px;color:var(--t2)">18 Loopers · avg 3h</div></div><i class="ti ti-chevron-right" style="color:var(--t2)"></i></div>
+        </div>
+        <div style="font-size:11px;color:var(--t2);text-align:center;margin:6px 0 14px">+ 11 more types</div>
+        <div class="ava-card" style="margin-bottom:16px"><i class="ti ti-bulb" style="font-size:18px;color:var(--info);margin-top:1px"></i><div style="flex:1"><div style="font-size:12px;color:var(--t1);margin-bottom:8px"><b>6 task types make up 80%</b> of your blockers. Turn the top ones into playbooks and they stop being blockers.</div><button class="btn sm" onclick="go('sops')">See playbooks</button></div></div>
+        <p class="lbl">Reply time this week</p>
+        <div class="card" style="margin-bottom:16px">
+          <div class="row"><div class="av" style="background:var(--info-bg);color:var(--info)">You</div><span style="font-size:13px;flex:1">You <span style="font-size:10px;color:var(--t2)">· owner</span></span><span style="font-size:12px;color:var(--t1)">avg 4h</span></div>
+          <div class="row"><div class="av">WL</div><span style="font-size:13px;flex:1">William <span style="font-size:10px;color:var(--t2)">· staff</span></span><i class="ti ti-arrow-up-right" style="color:var(--danger);font-size:13px"></i><span style="font-size:12px;color:var(--danger)">avg 6h</span></div>
+          <div class="row"><div class="av">PA</div><span style="font-size:13px;flex:1">Paul <span style="font-size:10px;color:var(--t2)">· staff</span></span><span style="font-size:12px;color:var(--t1)">avg 1h</span></div>
+          <div class="row"><div class="av" style="color:var(--purple)">GR</div><span style="font-size:13px;flex:1">Grace <span style="font-size:10px;color:var(--t2)">· looper</span></span><i class="ti ti-arrow-down-right" style="color:var(--green);font-size:13px"></i><span style="font-size:12px;color:var(--green)">avg 40m</span></div>
+        </div>
+        <p class="lbl">Ava noticed</p>
+        <div class="ava-card" style="margin-bottom:8px"><i class="ti ti-bulb" style="font-size:17px;color:var(--info);margin-top:1px"></i><div style="flex:1"><div style="font-size:12px;color:var(--t1);margin-bottom:7px">Booking confirmations wait <b>5h on average — across everyone</b>, not one person. Looks like the step, not the people. Auto-confirm the low-risk ones?</div><button class="btn sm" onclick="say('Setting up auto-confirm for low-risk bookings')">Automate this step</button></div></div>
+        <div class="ava-card" style="margin-bottom:16px"><i class="ti ti-user-search" style="font-size:17px;color:var(--info);margin-top:1px"></i><div style="flex:1"><div style="font-size:12px;color:var(--t1);margin-bottom:7px">William's part takes <b>~6× the team</b> on bookings — could be workload, not slacking. Want a closer look?</div><button class="btn sm" onclick="say('Looking into William''s booking times')">Look into it</button></div></div>
+
+        <p class="lbl">Your team today</p>
+        <div class="card" style="margin-bottom:16px">
+          <div class="row"><div class="av">WL</div><div style="flex:1"><div style="font-size:13px">William</div><div style="font-size:11px;color:var(--t2)">Started 7:48 · replies fast</div></div><i class="ti ti-circle-filled dot" style="color:var(--green)"></i></div>
+          <div class="row"><div class="av">GL</div><div style="flex:1"><div style="font-size:13px">Glee</div><div style="font-size:11px;color:var(--t2)">Started 10:12 · late 2 days</div></div><i class="ti ti-circle-filled dot" style="color:var(--amber)"></i></div>
+          <div class="row"><div class="av">PA</div><div style="flex:1"><div style="font-size:13px">Paul</div><div style="font-size:11px;color:var(--t2)">Started 7:55 · steady</div></div><i class="ti ti-circle-filled dot" style="color:var(--green)"></i></div>
+        </div>
+
+        <p class="lbl">Ava flagged</p>
+        <div class="card">
+          <div class="row"><i class="ti ti-circle-filled dot" style="color:var(--red)"></i><span style="font-size:13px;flex:1">Hammer &amp; Co — chasing, 2nd time</span></div>
+          <div class="row"><i class="ti ti-circle-filled dot" style="color:var(--amber)"></i><span style="font-size:13px;flex:1">Glee late starts — 2 this week</span></div>
+          <div class="row"><i class="ti ti-circle-filled dot" style="color:var(--green)"></i><span style="font-size:13px;flex:1">William cleared the backlog by 9am</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PLAYBOOKS LIBRARY -->
+    <div class="scr" id="sops">
+      <div class="pad" style="display:flex;align-items:center;gap:8px"><div style="flex:1"><span class="h">Playbooks</span><div style="font-size:12px;color:var(--t2)">Design what you want automated — we build it with you</div></div><button class="btn sm" onclick="go('newpb')"><i class="ti ti-plus" style="font-size:13px"></i> New</button></div>
+      <div class="pad" style="padding-top:0">
+        <div style="background:var(--bg1);border-radius:10px;padding:10px 12px;margin-bottom:14px">
+          <div style="font-size:11px;color:var(--t2);margin-bottom:7px">Every play is run by a mix of:</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <span class="who ava"><i class="ti ti-robot"></i> Ava</span>
+            <span class="who you"><i class="ti ti-user"></i> You</span>
+            <span class="who crew" style="background:var(--bg0)"><i class="ti ti-tool"></i> Your crew</span>
+            <span class="who looper"><i class="ti ti-headset"></i> Our Loopers</span>
+            <span class="who browser"><i class="ti ti-browser"></i> Browser agent</span>
+          </div>
+        </div>
+        <p class="lbl">On now</p>
+        <div class="card" style="margin-bottom:14px">
+          <div class="row" style="cursor:pointer" onclick="go('sp-jobs')"><i class="ti ti-mail-search" style="color:var(--t1)"></i><div style="flex:1"><div style="font-size:13px">Spotted jobs</div><div style="font-size:11px;color:var(--t2)">Finds jobs in your email · 9 this week</div></div><span class="chip" style="background:var(--warn-bg);color:var(--warn)">pilot</span><i class="ti ti-chevron-right" style="color:var(--t2)"></i></div>
+          <div class="row" style="cursor:pointer" onclick="go('sp-spend')"><i class="ti ti-receipt-2" style="color:var(--t1)"></i><div style="flex:1"><div style="font-size:13px">Spend hunter</div><div style="font-size:11px;color:var(--t2)">Bills &amp; receipts each morning · 14 this week</div></div><span class="chip" style="color:#0F6E56"><i class="ti ti-circle-filled dot" style="color:var(--green)"></i> live</span><i class="ti ti-chevron-right" style="color:var(--t2)"></i></div>
+          <div class="row" style="cursor:pointer" onclick="go('sp-inv')"><i class="ti ti-file-invoice" style="color:var(--t1)"></i><div style="flex:1"><div style="font-size:13px">Weekly invoicing</div><div style="font-size:11px;color:var(--t2)">Drafts finished jobs · 6 drafted, 6 sent</div></div><span class="chip" style="background:var(--warn-bg);color:var(--warn)">pilot</span><i class="ti ti-chevron-right" style="color:var(--t2)"></i></div>
+        </div>
+        <p class="lbl">Suggested by Ava</p>
+        <div style="font-size:11px;color:var(--t2);margin:-2px 0 8px">Drafted from how your Loopers keep solving these. Review and turn on.</div>
+        <div class="card">
+          <div class="row" style="cursor:pointer" onclick="say('Ava has drafted this playbook — review coming soon')"><i class="ti ti-calendar-check" style="color:var(--t1)"></i><div style="flex:1"><div style="font-size:13px">Booking confirmations</div><div style="font-size:11px;color:var(--t2)">42 / week · biggest blocker</div></div><span class="chip" style="background:var(--info-bg);color:var(--info)">review</span><i class="ti ti-chevron-right" style="color:var(--t2)"></i></div>
+          <div class="row" style="cursor:pointer" onclick="say('Ava has drafted this playbook — review coming soon')"><i class="ti ti-message-question" style="color:var(--t1)"></i><div style="flex:1"><div style="font-size:13px">Missing-info chases</div><div style="font-size:11px;color:var(--t2)">18 / week · routed to Loopers</div></div><span class="chip" style="background:var(--info-bg);color:var(--info)">review</span><i class="ti ti-chevron-right" style="color:var(--t2)"></i></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PLAYBOOK: SPOTTED JOBS -->
+    <div class="scr" id="sp-jobs">
+      <div class="pad" style="display:flex;align-items:center;gap:8px"><i class="ti ti-chevron-left" style="font-size:20px;cursor:pointer;color:var(--t1)" onclick="go('sops')"></i><div style="flex:1"><span class="h">Spotted jobs</span><div style="font-size:12px;color:var(--t2)">Finds new jobs in your inbox, books them from Slack</div></div><span class="chip" style="background:var(--warn-bg);color:var(--warn)">pilot</span></div>
+      <div class="pad" style="padding-top:0">
+        <div style="display:flex;align-items:center;gap:8px;background:var(--info-bg);border-radius:8px;padding:9px 11px;margin-bottom:12px"><i class="ti ti-edit" style="color:var(--info)"></i><div style="flex:1;font-size:12px;color:var(--info)">Tap any step to change how Ava decides. She never books without your yes.</div></div>
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:14px"><span style="font-size:11px;color:var(--t2)">In this play:</span><span class="who ava"><i class="ti ti-robot"></i> Ava</span><span class="who you"><i class="ti ti-user"></i> You</span></div>
+        <button class="btn full" style="padding:9px 0;margin-bottom:12px" onclick="openFlow('sp-jobs')"><i class="ti ti-route" style="font-size:14px"></i> Edit the full flow</button>
+
+        <div class="card" style="padding:10px 12px;margin-bottom:6px;display:flex;align-items:center;gap:9px;cursor:pointer" onclick="say('Edit the trigger')"><i class="ti ti-mail" style="color:var(--t1)"></i><div style="flex:1;font-size:13px">When a <b>new email</b> lands in your inbox</div><span class="who ava"><i class="ti ti-robot"></i> Ava</span></div>
+        <div style="text-align:center;color:var(--t2);font-size:13px;margin:1px 0"><i class="ti ti-arrow-down"></i></div>
+
+        <div class="card" style="padding:10px 12px;margin-bottom:6px">
+          <div style="display:flex;align-items:center;gap:9px;margin-bottom:4px;cursor:pointer" onclick="say('Edit this condition')"><i class="ti ti-help-circle" style="color:var(--t1)"></i><div style="flex:1;font-size:13px">Looks like a real job?</div><span class="who ava"><i class="ti ti-robot"></i> Ava</span></div>
+          <div style="font-size:11px;color:var(--t2);margin-bottom:8px">Ava reads it · only acts when she's confident</div>
+          <div style="display:flex;gap:8px"><div style="flex:1;font-size:11px;background:var(--bg1);border-radius:7px;padding:6px 8px"><b>No</b> → leave it</div><div style="flex:1;font-size:11px;background:var(--bg1);border-radius:7px;padding:6px 8px;text-align:center">Yes ↓</div></div>
+        </div>
+
+        <div class="card" style="padding:10px 12px;margin-bottom:6px;display:flex;align-items:center;gap:9px"><i class="ti ti-brand-slack" style="color:var(--t1)"></i><div style="flex:1;font-size:13px">Post to Slack: <b>"want me to book it?"</b></div><span class="who ava"><i class="ti ti-robot"></i> Ava</span></div>
+        <div style="text-align:center;color:var(--t2);font-size:13px;margin:1px 0"><i class="ti ti-arrow-down"></i></div>
+
+        <div class="card" style="padding:10px 12px;margin-bottom:6px">
+          <div style="display:flex;align-items:center;gap:9px;margin-bottom:8px"><i class="ti ti-help-circle" style="color:var(--t1)"></i><div style="flex:1;font-size:13px">You reply yes?</div><span class="who you"><i class="ti ti-user"></i> You</span></div>
+          <div style="display:flex;gap:8px"><div style="flex:1;font-size:11px;background:var(--bg1);border-radius:7px;padding:6px 8px"><b>No</b> → drop it</div><div style="flex:1;font-size:11px;background:var(--bg1);border-radius:7px;padding:6px 8px;text-align:center">Yes ↓</div></div>
+        </div>
+
+        <div class="card" style="padding:10px 12px;margin-bottom:14px;border-color:#9FE1CB;background:#e1f5ee"><div style="display:flex;align-items:center;gap:9px"><i class="ti ti-circle-check" style="color:#0F6E56"></i><div style="flex:1;font-size:13px;color:#0F6E56"><b>Book the job + email the customer</b></div><span class="who ava" style="background:#fff"><i class="ti ti-robot"></i> Ava</span></div></div>
+
+        <div id="extra-sp-jobs"></div>
+        <button class="btn pri full" style="padding:11px 0;margin-bottom:8px" onclick="addStep('sp-jobs')"><i class="ti ti-plus" style="font-size:13px"></i> Add a step</button>
+        <button class="btn full" style="padding:11px 0" onclick="say('Spotted jobs paused')"><i class="ti ti-player-pause" style="font-size:13px"></i> Pause this playbook</button>
+      </div>
+    </div>
+
+    <!-- PLAYBOOK: SPEND HUNTER -->
+    <div class="scr" id="sp-spend">
+      <div class="pad" style="display:flex;align-items:center;gap:8px"><i class="ti ti-chevron-left" style="font-size:20px;cursor:pointer;color:var(--t1)" onclick="go('sops')"></i><div style="flex:1"><span class="h">Spend hunter</span><div style="font-size:12px;color:var(--t2)">Collects bills &amp; receipts every morning</div></div><span class="chip" style="color:#0F6E56"><i class="ti ti-circle-filled dot" style="color:var(--green)"></i> live</span></div>
+      <div class="pad" style="padding-top:0">
+        <div style="display:flex;align-items:center;gap:8px;background:var(--info-bg);border-radius:8px;padding:9px 11px;margin-bottom:12px"><i class="ti ti-eye" style="color:var(--info)"></i><div style="flex:1;font-size:12px;color:var(--info)">Read-only on your inbox — Ava never sends or pays anything.</div></div>
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:14px"><span style="font-size:11px;color:var(--t2)">In this play:</span><span class="who ava"><i class="ti ti-robot"></i> Ava</span><span style="font-size:11px;color:var(--t2)">— runs entirely on its own</span></div>
+        <button class="btn full" style="padding:9px 0;margin-bottom:12px" onclick="openFlow('sp-spend')"><i class="ti ti-route" style="font-size:14px"></i> Edit the full flow</button>
+
+        <div class="card" style="padding:10px 12px;margin-bottom:6px;display:flex;align-items:center;gap:9px;cursor:pointer" onclick="say('Edit the schedule')"><i class="ti ti-clock" style="color:var(--t1)"></i><div style="flex:1;font-size:13px">Every weekday <b>7:30am</b>, scan the last 3 days</div><span class="who ava"><i class="ti ti-robot"></i> Ava</span></div>
+        <div style="text-align:center;color:var(--t2);font-size:13px;margin:1px 0"><i class="ti ti-arrow-down"></i></div>
+
+        <div class="card" style="padding:10px 12px;margin-bottom:6px"><div style="display:flex;align-items:center;gap:9px"><i class="ti ti-help-circle" style="color:var(--t1)"></i><div style="flex:1;font-size:13px">Email has a PDF attached?</div><span class="who ava"><i class="ti ti-robot"></i> Ava</span></div><div style="display:flex;gap:8px;margin-top:8px"><div style="flex:1;font-size:11px;background:var(--bg1);border-radius:7px;padding:6px 8px"><b>No</b> → skip</div><div style="flex:1;font-size:11px;background:var(--bg1);border-radius:7px;padding:6px 8px;text-align:center">Yes ↓</div></div></div>
+
+        <div class="card" style="padding:10px 12px;margin-bottom:6px"><div style="display:flex;align-items:center;gap:9px;margin-bottom:4px;cursor:pointer" onclick="say('Edit this condition')"><i class="ti ti-help-circle" style="color:var(--t1)"></i><div style="flex:1;font-size:13px">A bill, receipt or remittance?</div><span class="who ava"><i class="ti ti-robot"></i> Ava</span></div><div style="font-size:11px;color:var(--t2);margin-bottom:8px">Ava reads it</div><div style="display:flex;gap:8px"><div style="flex:1;font-size:11px;background:var(--bg1);border-radius:7px;padding:6px 8px"><b>No</b> → skip</div><div style="flex:1;font-size:11px;background:var(--bg1);border-radius:7px;padding:6px 8px;text-align:center">Yes ↓</div></div></div>
+
+        <div class="card" style="padding:10px 12px;margin-bottom:6px"><div style="display:flex;align-items:center;gap:9px"><i class="ti ti-help-circle" style="color:var(--t1)"></i><div style="flex:1;font-size:13px">Already collected it before?</div><span class="who ava"><i class="ti ti-robot"></i> Ava</span></div><div style="display:flex;gap:8px;margin-top:8px"><div style="flex:1;font-size:11px;background:var(--bg1);border-radius:7px;padding:6px 8px"><b>Yes</b> → skip</div><div style="flex:1;font-size:11px;background:var(--bg1);border-radius:7px;padding:6px 8px;text-align:center">No ↓</div></div></div>
+
+        <div class="card" style="padding:10px 12px;margin-bottom:14px;border-color:#9FE1CB;background:#e1f5ee"><div style="display:flex;align-items:center;gap:9px"><i class="ti ti-circle-check" style="color:#0F6E56"></i><div style="flex:1;font-size:13px;color:#0F6E56"><b>Drop it in your chat to pay or file</b></div><span class="who ava" style="background:#fff"><i class="ti ti-robot"></i> Ava</span></div></div>
+
+        <div id="extra-sp-spend"></div>
+        <button class="btn pri full" style="padding:11px 0;margin-bottom:8px" onclick="addStep('sp-spend')"><i class="ti ti-plus" style="font-size:13px"></i> Add a step</button>
+        <button class="btn full" style="padding:11px 0" onclick="say('Spend hunter paused')"><i class="ti ti-player-pause" style="font-size:13px"></i> Pause this playbook</button>
+      </div>
+    </div>
+
+    <!-- PLAYBOOK: WEEKLY INVOICING -->
+    <div class="scr" id="sp-inv">
+      <div class="pad" style="display:flex;align-items:center;gap:8px"><i class="ti ti-chevron-left" style="font-size:20px;cursor:pointer;color:var(--t1)" onclick="go('sops')"></i><div style="flex:1"><span class="h">Weekly invoicing</span><div style="font-size:12px;color:var(--t2)">Drafts invoices for finished jobs, you approve</div></div><span class="chip" style="background:var(--warn-bg);color:var(--warn)">pilot</span></div>
+      <div class="pad" style="padding-top:0">
+        <div style="display:flex;align-items:center;gap:8px;background:var(--info-bg);border-radius:8px;padding:9px 11px;margin-bottom:12px"><i class="ti ti-edit" style="color:var(--info)"></i><div style="flex:1;font-size:12px;color:var(--info)">Never raises an invoice without your OK. Pause anytime.</div></div>
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:14px"><span style="font-size:11px;color:var(--t2)">In this play:</span><span class="who ava"><i class="ti ti-robot"></i> Ava</span><span class="who crew"><i class="ti ti-tool"></i> Crew</span><span class="who looper"><i class="ti ti-headset"></i> Looper</span><span class="who you"><i class="ti ti-user"></i> You</span><span class="who browser"><i class="ti ti-browser"></i> Browser</span></div>
+        <button class="btn full" style="padding:9px 0;margin-bottom:12px" onclick="openFlow('sp-inv')"><i class="ti ti-route" style="font-size:14px"></i> Edit the full flow</button>
+
+        <div class="card" style="padding:10px 12px;margin-bottom:6px;display:flex;align-items:center;gap:9px;cursor:pointer" onclick="say('Edit the schedule')"><i class="ti ti-clock" style="color:var(--t1)"></i><div style="flex:1;font-size:13px">Every weekday morning, check your jobs</div><span class="who ava"><i class="ti ti-robot"></i> Ava</span></div>
+        <div style="text-align:center;color:var(--t2);font-size:13px;margin:1px 0"><i class="ti ti-arrow-down"></i></div>
+
+        <div class="card" style="padding:10px 12px;margin-bottom:6px"><div style="display:flex;align-items:center;gap:9px;margin-bottom:4px;cursor:pointer" onclick="say('Edit this condition')"><i class="ti ti-help-circle" style="color:var(--t1)"></i><div style="flex:1;font-size:13px">Done, not invoiced, quiet 2+ days?</div><span class="who ava"><i class="ti ti-robot"></i> Ava</span></div><div style="display:flex;gap:8px"><div style="flex:1;font-size:11px;background:var(--bg1);border-radius:7px;padding:6px 8px"><b>No</b> → wait</div><div style="flex:1;font-size:11px;background:var(--bg1);border-radius:7px;padding:6px 8px;text-align:center">Yes ↓</div></div></div>
+
+        <div class="card" style="padding:10px 12px;margin-bottom:6px;display:flex;align-items:center;gap:9px"><i class="ti ti-file-pencil" style="color:var(--t1)"></i><div style="flex:1;font-size:13px">Draft it from your <b>usual pricing</b></div><span class="who ava"><i class="ti ti-robot"></i> Ava</span></div>
+        <div style="text-align:center;color:var(--t2);font-size:13px;margin:1px 0"><i class="ti ti-arrow-down"></i></div>
+
+        <div class="card" style="padding:10px 12px;margin-bottom:6px">
+          <div style="display:flex;align-items:center;gap:9px"><i class="ti ti-tool" style="color:var(--t1)"></i><div style="flex:1;font-size:13px">Ask the crew: finished? materials? credits?</div><span class="who crew"><i class="ti ti-tool"></i> Crew</span></div>
+          <div style="display:flex;align-items:center;gap:6px;margin-top:8px;padding-top:8px;border-top:1px solid var(--bd)"><span style="flex:1;font-size:11px;color:var(--t2)">No reply in a day? A Looper chases it</span><span class="who looper"><i class="ti ti-headset"></i> Looper</span></div>
+        </div>
+        <div style="text-align:center;color:var(--t2);font-size:13px;margin:1px 0"><i class="ti ti-arrow-down"></i></div>
+
+        <div class="card" style="padding:10px 12px;margin-bottom:6px">
+          <div style="display:flex;align-items:center;gap:9px;margin-bottom:8px;cursor:pointer" onclick="say('Edit approval rule')"><i class="ti ti-help-circle" style="color:var(--t1)"></i><div style="flex:1;font-size:13px">You approve the batch?</div><span class="who you"><i class="ti ti-user"></i> You</span></div>
+          <div style="display:flex;gap:8px"><div style="flex:1;font-size:11px;background:#e1f5ee;color:#0F6E56;border-radius:7px;padding:6px 8px"><b>Approve</b> ↓</div><div style="flex:1;font-size:11px;background:var(--bg1);border-radius:7px;padding:6px 8px"><b>Hold</b> → park, recheck</div></div>
+        </div>
+        <div style="text-align:center;color:var(--t2);font-size:13px;margin:1px 0"><i class="ti ti-arrow-down"></i></div>
+
+        <div class="card" style="padding:10px 12px;margin-bottom:14px;border-color:#F0997B">
+          <div style="display:flex;align-items:center;gap:9px"><i class="ti ti-browser" style="color:var(--coral)"></i><div style="flex:1;font-size:13px"><b>Raise it in Fergus</b></div><span class="who browser"><i class="ti ti-browser"></i> Browser</span></div>
+          <div style="font-size:11px;color:var(--t2);margin-top:6px">Fergus has no invoice API yet — our browser agent enters it for you.</div>
+        </div>
+
+        <div id="extra-sp-inv"></div>
+        <button class="btn pri full" style="padding:11px 0;margin-top:8px" onclick="addStep('sp-inv')"><i class="ti ti-plus" style="font-size:13px"></i> Add a step</button>
+        <button class="btn full" style="padding:11px 0;margin-top:8px" onclick="say('Weekly invoicing paused')"><i class="ti ti-player-pause" style="font-size:13px"></i> Pause this playbook</button>
+      </div>
+    </div>
+
+    <!-- ADD A STEP -->
+    <div class="scr" id="addstep">
+      <div class="pad" style="display:flex;align-items:center;gap:8px"><i class="ti ti-chevron-left" style="font-size:20px;cursor:pointer;color:var(--t1)" onclick="go(stepReturn)"></i><div><span class="h">Add a step</span><div style="font-size:12px;color:var(--t2)">Describe it, then choose who runs it</div></div></div>
+      <div class="pad" style="padding-top:0">
+        <p class="lbl">The step</p>
+        <input id="stepin" class="ti-input" style="width:100%" placeholder="e.g. Chase any quote not accepted after 5 days" />
+        <div style="margin:10px 0 0">
+          <div style="font-size:11px;color:var(--t2);margin-bottom:6px"><i class="ti ti-wand"></i> Or let Ava suggest one:</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <span class="chip" style="cursor:pointer" onclick="suggestStep('Send the customer a reminder the day before','ava')">Reminder the day before</span>
+            <span class="chip" style="cursor:pointer" onclick="suggestStep('Ask the crew for before &amp; after photos','crew')">Photos from crew</span>
+            <span class="chip" style="cursor:pointer" onclick="suggestStep('File the signed quote in the customer folder','browser')">File the quote</span>
+          </div>
+        </div>
+
+        <p class="lbl" style="margin-top:16px">Who runs it? <span style="font-weight:400;color:var(--t2)">· Ava suggests herself</span></p>
+        <div id="whosel" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">
+          <span class="pick" data-k="ava" onclick="pickWho('ava')"><i class="ti ti-robot"></i> Ava</span>
+          <span class="pick" data-k="you" onclick="pickWho('you')"><i class="ti ti-user"></i> You</span>
+          <span class="pick" data-k="crew" onclick="pickWho('crew')"><i class="ti ti-tool"></i> Crew</span>
+          <span class="pick" data-k="looper" onclick="pickWho('looper')"><i class="ti ti-headset"></i> Looper</span>
+          <span class="pick" data-k="browser" onclick="pickWho('browser')"><i class="ti ti-browser"></i> Browser</span>
+        </div>
+
+        <div id="res"></div>
+      </div>
+    </div>
+
+    <!-- FLOW EDITOR -->
+    <div class="scr" id="flow">
+      <div class="pad" style="display:flex;align-items:center;gap:8px"><i class="ti ti-chevron-left" style="font-size:20px;cursor:pointer;color:var(--t1)" onclick="go(currentFlow)"></i><div style="flex:1"><span class="h" id="flowtitle">Edit flow</span><div style="font-size:12px;color:var(--t2)">Reorder, edit, insert or remove any step</div></div></div>
+      <div class="pad" style="padding-top:0" id="flowbody"></div>
+      <div class="pad" style="padding-top:0"><button class="btn pri full" style="padding:11px 0" onclick="say('Sent to the Ava team — we\'ll build it and turn it on')"><i class="ti ti-send" style="font-size:14px"></i> Request this automation</button><div style="font-size:11px;color:var(--t2);text-align:center;margin-top:8px">Ava and our team build it for you behind the scenes.</div></div>
+    </div>
+
+    <!-- NEW PLAYBOOK -->
+    <div class="scr" id="newpb">
+      <div class="pad" style="display:flex;align-items:center;gap:8px"><i class="ti ti-chevron-left" style="font-size:20px;cursor:pointer;color:var(--t1)" onclick="go('sops')"></i><div><span class="h">New playbook</span><div style="font-size:12px;color:var(--t2)">How do you want to build it?</div></div></div>
+      <div class="pad" style="padding-top:0">
+        <div class="card" style="padding:13px;margin-bottom:10px;cursor:pointer" onclick="say('Describe it — Ava drafts the steps and resolves each down the capability ladder')">
+          <div style="display:flex;align-items:center;gap:11px"><i class="ti ti-message-2" style="font-size:22px;color:var(--info)"></i><div style="flex:1"><div style="font-size:14px;font-weight:500">Describe it</div><div style="font-size:12px;color:var(--t2)">Tell Ava in plain English. She drafts the steps and works out who runs each.</div></div></div>
+        </div>
+        <div class="card" style="padding:13px;margin-bottom:10px;cursor:pointer" onclick="say('Show Ava — record yourself once, she turns it into a playbook')">
+          <div style="display:flex;align-items:center;gap:11px"><i class="ti ti-device-desktop" style="font-size:22px;color:var(--info)"></i><div style="flex:1"><div style="font-size:14px;font-weight:500">Show Ava <span style="font-size:11px;color:var(--t2)">(screen record)</span></div><div style="font-size:12px;color:var(--t2)">Do it once on screen. Ava watches the recording and builds the steps.</div></div><span class="chip" style="background:var(--info-bg);color:var(--info)">soon</span></div>
+        </div>
+        <div class="card" style="padding:13px;margin-bottom:14px;cursor:pointer" onclick="say('Build it manually — add steps and pick who runs each')">
+          <div style="display:flex;align-items:center;gap:11px"><i class="ti ti-stack-2" style="font-size:22px;color:var(--info)"></i><div style="flex:1"><div style="font-size:14px;font-weight:500">Build it manually</div><div style="font-size:12px;color:var(--t2)">Add steps yourself and choose the executor for each.</div></div></div>
+        </div>
+        <div style="font-size:11px;color:var(--t2);text-align:center">Stuck? You or our team can jump in and codify the tricky parts.</div>
+      </div>
+    </div>
+
+    <!-- MORE -->
+    <div class="scr" id="more">
+      <div class="pad"><span class="h">All of Ava</span></div>
+      <div class="pad" style="padding-top:0">
+        <p class="lbl" style="text-transform:uppercase;letter-spacing:.04em;color:var(--t2);font-size:11px">Work</p>
+        <div class="grid" style="margin-bottom:16px">
+          <div class="tile" onclick="go('jobs')"><div class="ic"><i class="ti ti-briefcase"></i></div><div class="tt">Jobs</div></div>
+          <div class="tile" onclick="go('invoicing')"><div class="ic"><i class="ti ti-file-invoice"></i></div><div class="tt">Invoicing</div></div>
+          <div class="tile" onclick="go('invoicing')"><div class="ic"><i class="ti ti-receipt"></i></div><div class="tt">Bills</div></div>
+          <div class="tile" onclick="say('Calls')"><div class="ic"><i class="ti ti-phone"></i></div><div class="tt">Calls</div></div>
+          <div class="tile" onclick="say('Quotes')"><div class="ic"><i class="ti ti-calculator"></i></div><div class="tt">Quotes</div></div>
+          <div class="tile" style="opacity:.5"><div class="ic"><i class="ti ti-shield-check"></i></div><div class="tt">SSSP</div></div>
+          <div class="tile" style="opacity:.5"><div class="ic"><i class="ti ti-calendar"></i></div><div class="tt">Schedule</div></div>
+          <div class="tile" style="opacity:.5"><div class="ic"><i class="ti ti-checklist"></i></div><div class="tt">Compliance</div></div>
+        </div>
+        <p class="lbl" style="text-transform:uppercase;letter-spacing:.04em;color:var(--t2);font-size:11px">People &amp; comms</p>
+        <div class="grid" style="margin-bottom:16px">
+          <div class="tile" onclick="go('team')"><div class="ic"><i class="ti ti-users"></i></div><div class="tt">Team</div></div>
+          <div class="tile" onclick="go('blockers')"><div class="ic"><i class="ti ti-traffic-cone"></i></div><div class="tt">Blockers</div></div>
+          <div class="tile" onclick="go('sops')"><div class="ic"><i class="ti ti-sitemap"></i></div><div class="tt">Playbooks</div></div>
+          <div class="tile" onclick="say('Checklists')"><div class="ic"><i class="ti ti-checkbox"></i></div><div class="tt">Checklists</div></div>
+          <div class="tile" onclick="say('Email')"><div class="ic"><i class="ti ti-mail"></i></div><div class="tt">Email</div></div>
+          <div class="tile" onclick="say('Reminders')"><div class="ic"><i class="ti ti-bell"></i></div><div class="tt">Reminders</div></div>
+          <div class="tile" onclick="say('Memory')"><div class="ic"><i class="ti ti-brain"></i></div><div class="tt">Memory</div></div>
+          <div class="tile" onclick="say('Activity log')"><div class="ic"><i class="ti ti-history"></i></div><div class="tt">Activity</div></div>
+        </div>
+        <p class="lbl" style="text-transform:uppercase;letter-spacing:.04em;color:var(--t2);font-size:11px">Setup</p>
+        <div class="grid">
+          <div class="tile" onclick="say('Connections')"><div class="ic"><i class="ti ti-plug"></i></div><div class="tt">Connections</div></div>
+          <div class="tile" onclick="say('Permissions')"><div class="ic"><i class="ti ti-lock"></i></div><div class="tt">Permissions</div></div>
+          <div class="tile" onclick="say('Settings')"><div class="ic"><i class="ti ti-settings"></i></div><div class="tt">Settings</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- AVA CHAT -->
+    <div class="scr" id="ava">
+      <div class="pad" style="display:flex;align-items:center;gap:8px"><i class="ti ti-robot" style="font-size:19px;color:var(--info)"></i><span class="h">Ask Ava</span></div>
+      <div class="pad" style="padding-top:0">
+        <div style="font-size:13px;color:var(--t1);margin-bottom:14px">Ask for anything — even features without a screen yet.</div>
+        <div style="display:flex;flex-direction:column;gap:7px;margin-bottom:14px">
+          <div class="card" style="padding:9px 12px;font-size:13px;cursor:pointer" onclick="say('Quote the Mitre 10 leak job')">Quote the Mitre 10 leak job →</div>
+          <div class="card" style="padding:9px 12px;font-size:13px;cursor:pointer" onclick="say('Call R. Patel to confirm tomorrow')">Call R. Patel to confirm tomorrow →</div>
+          <div class="card" style="padding:9px 12px;font-size:13px;cursor:pointer" onclick="say('Remind me to chase Hammer &amp; Co at 2pm')">Remind me to chase Hammer &amp; Co at 2pm →</div>
+        </div>
+        <div style="display:flex;gap:7px"><input class="ti-input" id="ai" placeholder="Type anything…" onkeydown="if(event.key==='Enter')ask()" /><button class="btn pri" onclick="ask()"><i class="ti ti-arrow-up"></i></button></div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="nav">
+    <button id="n-home" class="act" onclick="go('home')"><div class="navi"><i class="ti ti-home"></i></div><div class="navt">Home</div></button>
+    <button id="n-play" onclick="go('sops')"><div class="navi"><i class="ti ti-sitemap"></i></div><div class="navt">Playbooks</div></button>
+    <div class="fab"><button onclick="go('ava')"><i class="ti ti-robot" style="font-size:26px"></i></button></div>
+    <button id="n-blockers" onclick="go('blockers')"><div class="navi"><i class="ti ti-traffic-cone"></i></div><div class="navt">Blockers</div></button>
+    <button id="n-more" onclick="go('more')"><div class="navi"><i class="ti ti-layout-grid"></i></div><div class="navt">More</div></button>
+  </div>
+
+  <div class="alert" id="alert"></div>
+</div>
+
+<script>
+  var parent={home:'home',work:'more',jobs:'more',invoicing:'more',booking:'more',team:'blockers',blockers:'blockers',sops:'play','sp-jobs':'play','sp-spend':'play','sp-inv':'play',addstep:'play',newpb:'play',flow:'play',more:'more',ava:''};
+  function go(name){
+    if(name==='team')name='blockers';
+    document.querySelectorAll('.scr').forEach(function(s){s.classList.toggle('on',s.id===name);});
+    var act=parent[name]||'';
+    ['home','play','blockers','more'].forEach(function(t){document.getElementById('n-'+t).classList.toggle('act',t===act);});
+    document.querySelector('.body').scrollTop=0;
+  }
+  var tmr;
+  function say(msg){
+    var a=document.getElementById('alert'); a.innerHTML='<i class="ti ti-robot"></i> '+msg;
+    a.classList.add('show'); clearTimeout(tmr); tmr=setTimeout(function(){a.classList.remove('show');},2200);
+  }
+  function ask(){var el=document.getElementById('ai');var v=(el.value||'').trim();if(v){say(v);el.value='';}}
+  var stepReturn='sops'; var editIndex=-1; var chosenWho='ava'; var stepMode='append'; var flowIndex=-1; var currentFlow='sp-inv';
+  var addedSteps={'sp-jobs':[],'sp-spend':[],'sp-inv':[]};
+  var WHO={
+    ava:{label:'Ava',short:'Ava',icon:'ti-robot',wc:'#0F6E56',wbg:'#e1f5ee',note:'Ava runs this automatically.',up:'Ready now if she has the tools — otherwise she routes it until they\'re built.'},
+    you:{label:'You',short:'You',icon:'ti-user',wc:'#0c447c',wbg:'#e6f1fb',note:'You\'ll get a card to action it yourself.',up:'Nothing to build.'},
+    crew:{label:'Your crew',short:'Crew',icon:'ti-tool',wc:'#444441',wbg:'#f1efe8',note:'Assigned to whoever\'s on the job, in Slack.',up:'Nothing to build.'},
+    looper:{label:'A Looper',short:'Looper',icon:'ti-headset',wc:'#534ab7',wbg:'#eeedfe',note:'One of our people does it for you.',up:'Works today — and gets coded into automation over time.'},
+    browser:{label:'The browser agent',short:'Browser',icon:'ti-browser',wc:'#993c1d',wbg:'#faece7',note:'Ava drives the software on screen, like a person.',up:'Works where there\'s no API — flagged to fully automate later.'}
+  };
+  function esc(s){return s.replace(/[&<>"]/g,function(c){return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c];});}
+  function addStep(from){stepMode='append';stepReturn=from;editIndex=-1;document.getElementById('stepin').value='';pickWho('ava');go('addstep');}
+  function editStep(from,idx){stepReturn=from;editIndex=idx;var s=addedSteps[from][idx];document.getElementById('stepin').value=s.text;pickWho(s.who);go('addstep');}
+  function fill(t){document.getElementById('stepin').value=t;}
+  function suggestStep(t,who){document.getElementById('stepin').value=t;pickWho(who);}
+  function pickWho(k){
+    chosenWho=k;
+    document.querySelectorAll('#whosel .pick').forEach(function(p){p.classList.toggle('sel',p.getAttribute('data-k')===k);});
+    var e=WHO[k];
+    document.getElementById('res').innerHTML=
+      '<div class="card" style="padding:12px 13px">'
+      +'<div style="display:flex;align-items:center;gap:9px;padding:9px 11px;background:'+e.wbg+';border-radius:8px;margin-bottom:8px"><i class="ti '+e.icon+'" style="font-size:17px;color:'+e.wc+'"></i><div style="flex:1"><div style="font-size:12px;font-weight:500;color:'+e.wc+'">Run by '+e.label+'</div><div style="font-size:11px;color:var(--t1);margin-top:1px">'+e.note+'</div></div></div>'
+      +'<div style="display:flex;gap:7px;align-items:flex-start;font-size:11px;color:var(--t1)"><i class="ti ti-arrow-up-right" style="font-size:14px;color:var(--info);margin-top:1px"></i><span>'+e.up+'</span></div>'
+      +'<button class="btn pri full" style="margin-top:11px;padding:8px 0" onclick="addThisStep()">'+((stepMode==='flowedit'||editIndex>=0)?'Save changes':(stepMode==='flowinsert'?'Insert step':'Add this step'))+'</button>'
+      +'</div>';
+  }
+  function addThisStep(){
+    var t=(document.getElementById('stepin').value||'').trim();
+    if(!t){say('Type the step first');return;}
+    if(stepMode==='flowedit'){var s=flows[currentFlow][flowIndex];s.text=t;s.who=chosenWho;say('Step updated');renderFlow();}
+    else if(stepMode==='flowinsert'){flows[currentFlow].splice(flowIndex,0,{kind:'action',text:t,who:chosenWho});say('Step inserted');renderFlow();}
+    else if(editIndex>=0){addedSteps[stepReturn][editIndex]={text:t,who:chosenWho};say('Step updated');renderExtra(stepReturn);}
+    else{addedSteps[stepReturn].push({text:t,who:chosenWho});say('Step added — run by '+WHO[chosenWho].short);renderExtra(stepReturn);}
+    document.getElementById('stepin').value='';editIndex=-1;
+    var ret=stepReturn; stepMode='append';
+    go(ret);
+  }
+  function delStep(from,idx){addedSteps[from].splice(idx,1);renderExtra(from);}
+  function renderExtra(pb){
+    var el=document.getElementById('extra-'+pb); if(!el)return;
+    var arr=addedSteps[pb];
+    if(!arr.length){el.innerHTML='';return;}
+    var html='<p class="lbl" style="margin-top:4px">Your added steps</p>';
+    arr.forEach(function(s,i){var w=WHO[s.who];
+      html+='<div class="card" style="padding:10px 12px;margin-bottom:6px;display:flex;align-items:center;gap:9px">'
+        +'<i class="ti ti-corner-down-right" style="color:var(--t2)"></i>'
+        +'<div style="flex:1;font-size:13px">'+esc(s.text)+'</div>'
+        +'<span class="who '+s.who+'"><i class="ti '+w.icon+'"></i> '+w.short+'</span>'
+        +'<i class="ti ti-pencil" style="color:var(--t2);font-size:14px;cursor:pointer" onclick="editStep(\''+pb+'\','+i+')"></i>'
+        +'<i class="ti ti-x" style="color:var(--t2);font-size:14px;cursor:pointer" onclick="delStep(\''+pb+'\','+i+')"></i>'
+        +'</div>';
+    });
+    el.innerHTML=html;
+  }
+  var FLOWTITLES={'sp-jobs':'Spotted jobs','sp-spend':'Spend hunter','sp-inv':'Weekly invoicing'};
+  var flows={
+    'sp-jobs':[
+      {kind:'trigger',text:'When a new email lands in your inbox',who:'ava'},
+      {kind:'condition',text:'Looks like a real job?',who:'ava',no:'leave it'},
+      {kind:'action',text:'Post to Slack: "want me to book it?"',who:'ava'},
+      {kind:'condition',text:'You reply yes?',who:'you',no:'drop it'},
+      {kind:'action',text:'Book the job + email the customer',who:'ava'}
+    ],
+    'sp-spend':[
+      {kind:'trigger',text:'Every weekday 7:30am, scan the last 3 days',who:'ava'},
+      {kind:'condition',text:'Email has a PDF attached?',who:'ava',no:'skip'},
+      {kind:'condition',text:'A bill, receipt or remittance?',who:'ava',no:'skip'},
+      {kind:'condition',text:'New — not collected before?',who:'ava',no:'skip'},
+      {kind:'action',text:'Drop it in your chat to pay or file',who:'ava'}
+    ],
+    'sp-inv':[
+      {kind:'trigger',text:'Every weekday morning, check your jobs',who:'ava'},
+      {kind:'condition',text:'Done, not invoiced, quiet 2+ days?',who:'ava',no:'wait'},
+      {kind:'action',text:'Draft it from your usual pricing',who:'ava'},
+      {kind:'action',text:'Ask the crew: finished? materials? credits?',who:'crew'},
+      {kind:'action',text:'Chase the crew if no reply in a day',who:'looper'},
+      {kind:'condition',text:'You approve the batch?',who:'you',no:'park & recheck'},
+      {kind:'action',text:'Raise it in Fergus',who:'browser'}
+    ]
+  };
+  function openFlow(pb){currentFlow=pb;renderFlow();go('flow');}
+  function moveStep(i,d){var a=flows[currentFlow];var j=i+d;if(j<0||j>=a.length)return;var t=a[i];a[i]=a[j];a[j]=t;renderFlow();}
+  function delFlow(i){flows[currentFlow].splice(i,1);renderFlow();}
+  function editFlow(i){stepMode='flowedit';flowIndex=i;stepReturn='flow';var s=flows[currentFlow][i];document.getElementById('stepin').value=s.text;pickWho(s.who||'ava');go('addstep');}
+  function insertFlow(i){stepMode='flowinsert';flowIndex=i;stepReturn='flow';document.getElementById('stepin').value='';pickWho('ava');go('addstep');}
+  function renderFlow(){
+    document.getElementById('flowtitle').textContent=FLOWTITLES[currentFlow]||'Edit flow';
+    var arr=flows[currentFlow],n=arr.length,h='';
+    function ins(i){return '<div style="text-align:center;margin:2px 0"><span onclick="insertFlow('+i+')" style="font-size:11px;color:var(--info);cursor:pointer"><i class="ti ti-plus" style="font-size:12px"></i> insert step</span></div>';}
+    h+=ins(0);
+    arr.forEach(function(s,i){var w=s.who?WHO[s.who]:null;
+      var ic=s.kind==='trigger'?'ti-player-play':(s.kind==='condition'?'ti-help-circle':'ti-arrow-right');
+      h+='<div class="card" style="padding:10px 12px">'
+        +'<div style="display:flex;align-items:center;gap:9px"><i class="ti '+ic+'" style="color:var(--t2);font-size:15px"></i><div style="flex:1;font-size:13px;cursor:pointer" onclick="editFlow('+i+')">'+esc(s.text)+'</div>'+(w?'<span class="who '+s.who+'"><i class="ti '+w.icon+'"></i> '+w.short+'</span>':'')+'</div>';
+      if(s.kind==='condition'){h+='<div style="display:flex;gap:8px;margin-top:8px"><div style="flex:1;font-size:11px;background:var(--bg1);border-radius:7px;padding:5px 8px"><b>No</b> → '+esc(s.no||'stop')+'</div><div style="flex:1;font-size:11px;background:var(--bg1);border-radius:7px;padding:5px 8px;text-align:center">Yes ↓</div></div>';}
+      h+='<div style="display:flex;justify-content:flex-end;gap:16px;margin-top:8px;padding-top:8px;border-top:1px solid var(--bd)">'
+        +'<i class="ti ti-arrow-up" style="font-size:15px;cursor:pointer;color:'+(i===0?'var(--bd2)':'var(--t1)')+'" onclick="moveStep('+i+',-1)"></i>'
+        +'<i class="ti ti-arrow-down" style="font-size:15px;cursor:pointer;color:'+(i===n-1?'var(--bd2)':'var(--t1)')+'" onclick="moveStep('+i+',1)"></i>'
+        +'<i class="ti ti-pencil" style="font-size:15px;cursor:pointer;color:var(--t1)" onclick="editFlow('+i+')"></i>'
+        +'<i class="ti ti-trash" style="font-size:15px;cursor:pointer;color:var(--danger)" onclick="delFlow('+i+')"></i>'
+        +'</div></div>';
+      h+=ins(i+1);
+    });
+    document.getElementById('flowbody').innerHTML=h;
+  }
+  pickWho('ava');
+
+  // ---- live data: Hunt Mode home reads real KPA numbers from Supabase ----
+  var DASH_ENDPOINT='https://somgalhkmptkclgvxhca.supabase.co/functions/v1/dashboard-data';
+  function el(id){return document.getElementById(id);}
+  function setTxt(id,v){var e=el(id);if(e)e.textContent=v;}
+  function ic(name){return '<i class="ti ti-'+name+'"></i>';}
+  function doneRow(it){return '<div class="row">'+'<i class="ti ti-'+(it.icon||'check')+'" style="color:var(--green)"></i>'+'<span style="font-size:13px;flex:1">'+it.title+(it.sub?' <span style="color:var(--t2)">· '+it.sub+'</span>':'')+'</span></div>';}
+  function loopRow(it){return '<div class="row">'+'<i class="ti ti-'+(it.icon||'user-check')+'" style="color:var(--pur)"></i>'+'<span style="font-size:13px;flex:1">'+it.title+(it.sub?' <span style="color:var(--t2)">· '+it.sub+'</span>':'')+'</span></div>';}
+  function decideCard(it){
+    var go2=it.kind==='invoice'?"go('invoicing')":"go('booking')";
+    var act=it.kind==='invoice'?'Review':'Book';
+    return '<div class="card" style="border-left:3px solid var(--amber);border-radius:0 10px 10px 0;padding:10px 12px;margin-bottom:8px">'+
+      '<div style="font-size:13px;margin-bottom:8px"><i class="ti ti-'+(it.icon||'mail-bolt')+'" style="color:var(--warn)"></i> '+it.title+'</div>'+
+      '<div class="actionbar"><button class="btn sm" style="flex:1" onclick="'+go2+'">'+act+'</button><button class="btn sm" style="flex:1" onclick="say(\'Dismissed\')">Dismiss</button></div></div>';
+  }
+  async function loadHome(){
+    try{
+      var r=await fetch(DASH_ENDPOINT); if(!r.ok)return; var d=await r.json();
+      var h=d.hunt||{};
+      setTxt('hfound',h.found); setTxt('hava',h.byAva); setTxt('hloop',h.byLoopers); setTxt('hyou',h.needsYou);
+      setTxt('cyou',h.needsYou); setTxt('cava',h.byAva); setTxt('cloop',h.byLoopers);
+      setTxt('hlive','· live');
+      var tot=Math.max(1,(h.byAva||0)+(h.byLoopers||0)+(h.needsYou||0));
+      var segs=el('hseg').children;
+      if(segs.length>=3){segs[0].style.width=(100*(h.byAva||0)/tot)+'%';segs[1].style.width=(100*(h.byLoopers||0)/tot)+'%';segs[2].style.width=(100*(h.needsYou||0)/tot)+'%';}
+      var sec=d.sections||{};
+      if((sec.needsYou||[]).length) el('lyou').innerHTML=sec.needsYou.map(decideCard).join('');
+      if((sec.byAva||[]).length) el('lava').innerHTML=sec.byAva.map(doneRow).join('')+'<div class="row" style="cursor:pointer" onclick="say(\'Show everything Ava did\')"><i class="ti ti-dots" style="color:var(--t2)"></i><span style="font-size:13px;flex:1;color:var(--info)">See all '+(h.byAva)+'</span></div>';
+      if((sec.byLoopers||[]).length) el('lloop').innerHTML=sec.byLoopers.map(loopRow).join('')+'<div class="row" style="cursor:pointer" onclick="say(\'Show all Looper tasks\')"><i class="ti ti-dots" style="color:var(--t2)"></i><span style="font-size:13px;flex:1;color:var(--info)">See all '+(h.byLoopers)+'</span></div>';
+    }catch(e){/* keep static fallback */}
+  }
+  loadHome();
+</script>
+</body>
+</html>
