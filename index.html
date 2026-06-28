@@ -51,11 +51,13 @@
         <div style="font-size:23px;font-weight:600">Ava Playbooks</div>
         <div style="font-size:14px;color:var(--t1);margin-top:7px;line-height:1.55">Get the admin off your plate. Tell Ava the jobs that eat your week, and she builds a step-by-step automation — a <b>playbook</b> — in seconds.</div>
       </div>
-      <div class="pad" style="padding-top:8px">
-        <div class="card" style="padding:12px;margin-bottom:9px;display:flex;align-items:center;gap:12px"><div style="width:26px;height:26px;border-radius:50%;background:var(--info-bg);color:var(--info);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600">1</div><div style="flex:1;font-size:13px">Tell Ava which software you use</div></div>
-        <div class="card" style="padding:12px;margin-bottom:9px;display:flex;align-items:center;gap:12px"><div style="width:26px;height:26px;border-radius:50%;background:var(--info-bg);color:var(--info);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600">2</div><div style="flex:1;font-size:13px">Say what you want off your plate — or tap an example</div></div>
-        <div class="card" style="padding:12px;margin-bottom:9px;display:flex;align-items:center;gap:12px"><div style="width:26px;height:26px;border-radius:50%;background:var(--info-bg);color:var(--info);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600">3</div><div style="flex:1;font-size:13px">Ava builds it — who does each step, what's automated. Tweak it, then send it to us to build.</div></div>
-        <button class="btn pri full" style="padding:12px 0;margin-top:16px" onclick="goIn()">Let's go <i class="ti ti-arrow-right" style="font-size:14px"></i></button>
+      <div class="pad" style="padding-top:10px">
+        <div style="font-size:14px;font-weight:600;text-align:center;margin-bottom:12px">👇 Tap one and watch her build it</div>
+        <button class="btn pri full" style="padding:14px 0;margin-bottom:9px;font-size:15px" onclick="goTry('Chase unpaid invoices')"><i class="ti ti-cash" style="font-size:15px"></i> Chase unpaid invoices</button>
+        <button class="btn full" style="padding:13px 0;margin-bottom:9px;font-size:14px" onclick="goTry('Follow up quotes that have not been accepted')"><i class="ti ti-file-invoice" style="font-size:14px"></i> Follow up quotes</button>
+        <button class="btn full" style="padding:13px 0;margin-bottom:9px;font-size:14px" onclick="goTry('Spot new jobs that come into my email and book them')"><i class="ti ti-mail-search" style="font-size:14px"></i> Spot new jobs in my email</button>
+        <button class="btn full" style="padding:13px 0;margin-bottom:16px;font-size:14px" onclick="goTry('Collect my supplier bills and receipts each week')"><i class="ti ti-receipt" style="font-size:14px"></i> Sort my bills</button>
+        <div style="text-align:center;font-size:13px;color:var(--t2)">or <span style="color:var(--info);font-weight:600;cursor:pointer" onclick="goOwn()">tell Ava your own →</span></div>
       </div>
     </div>
 
@@ -310,7 +312,7 @@
   }
 
   var pendingNew=false;
-  function startNew(){if(!selectedKeys().length){pendingNew=true;say('First — which systems do you use?');openTools();return;}startChat();show('describe');}
+  function startNew(){ensureTools();startChat();show('describe');}
   function finishTools(){saveTools();renderToolSummary();if(pendingNew&&selectedKeys().length){pendingNew=false;startChat();show('describe');}else{pendingNew=false;show('list');}}
   function firstCap(s){s=s.trim();return s.charAt(0).toUpperCase()+s.slice(1);}
   function avaDraft(d){var x=d.toLowerCase();
@@ -324,26 +326,35 @@
   var SAVE_ENDPOINT='https://somgalhkmptkclgvxhca.supabase.co/functions/v1/playbook-save';
   var VIEW_ENDPOINT='https://somgalhkmptkclgvxhca.supabase.co/functions/v1/playbook-view';
   var logged=false;
-  function goIn(){if(!logged){logged=true;try{fetch(VIEW_ENDPOINT,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({referrer:document.referrer,ua:navigator.userAgent})});}catch(e){}}show('list');}
+  function logView(){if(logged)return;logged=true;try{fetch(VIEW_ENDPOINT,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({referrer:document.referrer,ua:navigator.userAgent})});}catch(e){}}
+  function ensureTools(){if(!selectedKeys().length){['gmail','slack','fergus','xero'].forEach(function(k){sel[k]=true;});saveTools();}}
+  async function goTry(text){logView();ensureTools();say('Ava is building your playbook…');var ok=await buildFromText(text);if(!ok)say('Hmm — try again in a sec');}
+  function goOwn(){logView();ensureTools();startChat();show('describe');}
+  function goIn(){logView();show('list');}
   function uuid(){try{return crypto.randomUUID();}catch(e){return 'id-'+Date.now()+'-'+Math.random().toString(16).slice(2);}}
   function saveDraft(source){var p=mine[cur];if(!p)return;if(!p.id)p.id=uuid();try{fetch(SAVE_ENDPOINT,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({id:p.id,name:p.name,trigger:p.trig,steps:p.steps,tools:selectedKeys(),source:source||'edit',requested:!!p.requested})});}catch(e){}}
   function openDraft(p){mine.push(p);cur=mine.length-1;renderBuilder();hideFollowup();show('builder');}
   var chatMsgs=[];
   function startChat(){chatMsgs=[{role:'assistant',content:"What's eating up your time? Give me the gist in a line — I'll build you a first cut in seconds, then we'll sharpen it together."}];renderChat();var i=document.getElementById('chatin');if(i)i.value='';}
   function renderChat(){var el=document.getElementById('chatlog');if(!el)return;el.innerHTML=chatMsgs.map(function(m){if(m.role==='assistant')return '<div style="align-self:flex-start;max-width:86%;background:var(--bg1);border-radius:13px 13px 13px 3px;padding:9px 12px;font-size:13px">'+(m.content==='…'?'<span style="color:var(--t2)">Ava is building…</span>':esc(m.content))+'</div>';return '<div style="align-self:flex-end;max-width:86%;background:var(--info);color:#fff;border-radius:13px 13px 3px 13px;padding:9px 12px;font-size:13px">'+esc(m.content)+'</div>';}).join('');window.scrollTo(0,document.body.scrollHeight);}
-  async function chatSend(){
-    var inp=document.getElementById('chatin');var t=(inp.value||'').trim();if(!t)return;
-    chatMsgs.push({role:'user',content:t});inp.value='';chatMsgs.push({role:'assistant',content:'…'});renderChat();
+  async function buildFromText(t){
     try{
       var r=await fetch(DRAFT_ENDPOINT,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({description:t,tools:selectedKeys().map(function(k){return {key:k,label:toolMeta(k).label};})})});
-      var j=await r.json();chatMsgs.pop();
+      var j=await r.json();
       if(j.playbook){
         var pb=j.playbook;
         var steps=pb.steps.map(function(s){return {kind:'action',text:s.text,who:(WHO[s.owner]?s.owner:'ava'),systems:(Array.isArray(s.systems)?s.systems:[]),auto:s.automation,note:s.note};});
         openDraft({name:pb.name||'New playbook',trig:pb.trigger||'',status:'draft',steps:steps,desc:t});
-        setFollowup(j.followup);say('Quick draft ready ✓');
-      } else {chatMsgs.push({role:'assistant',content:"Hmm, didn't catch that — try again?"});renderChat();}
-    }catch(e){chatMsgs.pop();chatMsgs.push({role:'assistant',content:"Couldn't reach the server — give it another go."});renderChat();}
+        setFollowup(j.followup);say('Quick draft ready ✓');return true;
+      }
+    }catch(e){}
+    return false;
+  }
+  async function chatSend(){
+    var inp=document.getElementById('chatin');var t=(inp.value||'').trim();if(!t)return;
+    chatMsgs.push({role:'user',content:t});inp.value='';chatMsgs.push({role:'assistant',content:'…'});renderChat();
+    var ok=await buildFromText(t);chatMsgs.pop();
+    if(!ok){chatMsgs.push({role:'assistant',content:"Couldn't reach the server — give it another go."});renderChat();}
   }
   function quickStart(t){var i=document.getElementById('chatin');if(i)i.value=t;chatSend();}
   function hideFollowup(){var e=document.getElementById('avahint');if(e)e.style.display='none';}
