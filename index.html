@@ -61,6 +61,7 @@
         <div style="font-size:14px;color:var(--t1);margin-top:7px;line-height:1.55">Get the admin off your plate. Tell Ava the jobs that eat your week, and she builds a step-by-step automation — a <b>playbook</b> — in seconds.</div>
       </div>
       <div class="pad" style="padding-top:10px">
+        <div id="introtools" style="margin-bottom:14px"></div>
         <div style="font-size:14px;font-weight:600;text-align:center;margin-bottom:12px">👇 Tap one and watch her build it</div>
         <button class="btn pri full" style="padding:14px 0;margin-bottom:9px;font-size:15px" onclick="goTry('Chase unpaid invoices')"><i class="ti ti-cash" style="font-size:15px"></i> Chase unpaid invoices</button>
         <button class="btn full" style="padding:13px 0;margin-bottom:9px;font-size:14px" onclick="goTry('Follow up quotes that have not been accepted')"><i class="ti ti-file-invoice" style="font-size:14px"></i> Follow up quotes</button>
@@ -91,7 +92,7 @@
 
     <!-- TOOLS -->
     <div class="scr" id="tools">
-      <div class="pad" style="display:flex;align-items:center;gap:8px"><i class="ti ti-chevron-left" style="font-size:20px;cursor:pointer;color:var(--t1)" onclick="finishTools()"></i><div><span class="h">Which systems do you use?</span><div style="font-size:12px;color:var(--t2)">Tick everything — pick from any group. Ava only uses what you've got.</div></div></div>
+      <div class="pad" style="display:flex;align-items:center;gap:8px"><i class="ti ti-chevron-left" style="font-size:20px;cursor:pointer;color:var(--t1)" onclick="cancelTools()"></i><div><span class="h">Which systems do you use?</span><div style="font-size:12px;color:var(--t2)">Tick everything — pick from any group. Ava only uses what you've got.</div></div></div>
       <div class="pad" style="padding-top:0">
         <div id="toolsbody"></div>
         <p class="lbl" style="margin-top:16px">Use something else?</p>
@@ -240,7 +241,7 @@
   function selectedKeys(){return Object.keys(sel).filter(function(k){return sel[k];});}
   function saveTools(){try{localStorage.setItem('ava_tools',JSON.stringify({sel:selectedKeys(),custom:customTools}));}catch(e){}}
   function loadTools(){try{var d=JSON.parse(localStorage.getItem('ava_tools')||'{}');(d.custom||[]).forEach(function(c){if(!toolExists(c.k))customTools.push(c);});(d.sel||[]).forEach(function(k){sel[k]=true;});}catch(e){}}
-  function openTools(){renderTools();show('tools');}
+  function openTools(){toolsReturn='list';pendingAction=null;renderTools();show('tools');}
   function toggleTool(k){sel[k]=!sel[k];renderTools();}
   function addCustomTool(){var v=(document.getElementById('toolcustom').value||'').trim();if(!v)return;var k='c_'+v.toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'');if(!toolExists(k))customTools.push({k:k,label:v,cat:'Other',icon:'ti-tool'});sel[k]=true;document.getElementById('toolcustom').value='';renderTools();}
   function renderTools(){
@@ -320,12 +321,32 @@
     document.getElementById('examples').innerHTML=examples.map(function(e,i){return '<div class="card" style="padding:11px 12px;margin-bottom:8px;display:flex;align-items:center;gap:10px;cursor:pointer" onclick="openExample('+i+')"><i class="ti ti-bolt" style="color:var(--t1)"></i><div style="flex:1"><div style="font-size:14px">'+esc(e.name)+'</div><div style="font-size:11px;color:var(--t2)">'+esc(e.sub)+'</div></div>'+statusChip(e.status)+'<i class="ti ti-chevron-right" style="color:var(--t2)"></i></div>';}).join('');
   }
 
-  var pendingNew=false;
-  function startNew(){ensureTools();startChat();show('describe');}
-  function finishTools(){saveTools();renderToolSummary();if(pendingNew&&selectedKeys().length){pendingNew=false;startChat();show('describe');}else{pendingNew=false;show('list');}}
+  // Software gating — ask which apps the user has BEFORE building anything.
+  var pendingAction=null; var toolsReturn='list';
+  function toolsPicked(){try{return localStorage.getItem('ava_tools_picked')==='1';}catch(e){return selectedKeys().length>0;}}
+  function gateTools(next,origin){toolsReturn=origin||'list';if(toolsPicked()){pendingAction=null;next();return;}pendingAction=next;renderTools();show('tools');}
+  function pickApps(origin){toolsReturn=origin||'list';pendingAction=null;renderTools();show('tools');}
+  function cancelTools(){pendingAction=null;show(toolsReturn);} // back out without building
+  function finishTools(){
+    saveTools();try{localStorage.setItem('ava_tools_picked','1');}catch(e){}
+    renderToolSummary();renderIntroTools();
+    var n=pendingAction;pendingAction=null;
+    if(n){n();}else{show(toolsReturn||'list');}
+  }
+  function startNew(){gateTools(function(){startChat();show('describe');},'list');}
+  function renderIntroTools(){
+    var el=document.getElementById('introtools');if(!el)return;
+    var ks=selectedKeys();
+    if(!ks.length){
+      el.innerHTML='<div onclick="pickApps(\'intro\')" style="cursor:pointer;background:var(--info-bg);border:1.5px solid var(--info);padding:11px 13px;display:flex;align-items:center;gap:10px"><i class="ti ti-apps" style="font-size:20px;color:var(--info)"></i><div style="flex:1"><div style="font-size:13px;font-weight:600;color:var(--info)">First — tell Ava which apps you use</div><div style="font-size:11px;color:var(--info)">Xero or MYOB? Fergus or ServiceM8? She only uses what you\'ve got.</div></div><i class="ti ti-chevron-right" style="color:var(--info)"></i></div>';
+      return;
+    }
+    var chips=ks.slice(0,8).map(function(k){var m=toolMeta(k);return '<span class="chip" style="display:inline-flex;align-items:center;gap:3px"><i class="ti '+m.icon+'" style="font-size:11px"></i> '+esc(m.label)+'</span>';}).join('');
+    el.innerHTML='<div style="display:flex;align-items:center;margin-bottom:6px"><span style="font-size:11px;color:var(--t2);flex:1">Your apps</span><span onclick="pickApps(\'intro\')" style="font-size:12px;color:var(--info);cursor:pointer;font-weight:600"><i class="ti ti-pencil" style="font-size:11px"></i> edit</span></div><div style="display:flex;gap:6px;flex-wrap:wrap">'+chips+'</div>';
+  }
   function firstCap(s){s=s.trim();return s.charAt(0).toUpperCase()+s.slice(1);}
   function avaDraft(d){var x=d.toLowerCase();
-    if(/invoice|paid|pay|owe|overdue|chase|debt/.test(x))return {name:'Chase unpaid invoices',trig:'a customer goes 2 weeks overdue',status:'draft',steps:[{kind:'action',text:'Check Xero each morning for overdue invoices',who:'ava'},{kind:'action',text:'Send the customer a friendly reminder',who:'ava'},{kind:'action',text:'If still unpaid after a week, flag it to you',who:'you'},{kind:'action',text:'Call them if it hits 3 weeks overdue',who:'looper'}]};
+    if(/invoice|paid|pay|owe|overdue|chase|debt/.test(x))return {name:'Chase unpaid invoices',trig:'a customer goes 2 weeks overdue',status:'draft',steps:[{kind:'action',text:'Check your accounting app each morning for overdue invoices',who:'ava'},{kind:'action',text:'Send the customer a friendly reminder',who:'ava'},{kind:'action',text:'If still unpaid after a week, flag it to you',who:'you'},{kind:'action',text:'Call them if it hits 3 weeks overdue',who:'looper'}]};
     if(/quote|estimate|follow/.test(x))return {name:'Follow up quotes',trig:'a quote isn\'t accepted in 5 days',status:'draft',steps:[{kind:'action',text:'Spot quotes with no reply after 5 days',who:'ava'},{kind:'action',text:'Send a friendly follow-up email',who:'ava'},{kind:'action',text:'If still quiet, give them a call',who:'looper'}]};
     if(/enquir|inquiry|booking|book|job|lead/.test(x))return {name:'Handle new job enquiries',trig:'a new enquiry comes in by email',status:'draft',steps:[{kind:'action',text:'Read the email and pull out the job details',who:'ava'},{kind:'action',text:'Ask you in Slack: book it?',who:'ava'},{kind:'action',text:'Book the job and confirm with the customer',who:'ava'}]};
     if(/photo|site|compliance|sssp|safety/.test(x))return {name:'Collect site photos',trig:'a job is marked complete',status:'draft',steps:[{kind:'action',text:'Ask the crew for before & after photos',who:'crew'},{kind:'action',text:'File them in the customer folder',who:'browser'},{kind:'action',text:'Chase the crew if none arrive by end of day',who:'looper'}]};
@@ -336,9 +357,9 @@
   var VIEW_ENDPOINT='https://somgalhkmptkclgvxhca.supabase.co/functions/v1/playbook-view';
   var logged=false;
   function logView(){if(logged)return;logged=true;try{fetch(VIEW_ENDPOINT,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({referrer:document.referrer,ua:navigator.userAgent})});}catch(e){}}
-  function ensureTools(){if(!selectedKeys().length){['gmail','slack','fergus','xero'].forEach(function(k){sel[k]=true;});saveTools();}}
-  async function goTry(text){logView();ensureTools();say('Ava is building your playbook…');var ok=await buildFromText(text);if(!ok)say('Hmm — try again in a sec');}
-  function goOwn(){logView();ensureTools();startChat();show('describe');}
+  async function runBuild(text){say('Ava is building your playbook…');var ok=await buildFromText(text);if(!ok)say('Hmm — try again in a sec');}
+  function goTry(text){logView();gateTools(function(){runBuild(text);},'intro');}
+  function goOwn(){logView();gateTools(function(){startChat();show('describe');},'intro');}
   function goIn(){logView();show('list');}
   function uuid(){try{return crypto.randomUUID();}catch(e){return 'id-'+Date.now()+'-'+Math.random().toString(16).slice(2);}}
   function saveDraft(source){var p=mine[cur];if(!p)return;if(!p.id)p.id=uuid();try{fetch(SAVE_ENDPOINT,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({id:p.id,name:p.name,trigger:p.trig,steps:p.steps,tools:selectedKeys(),source:source||'edit',requested:!!p.requested})});}catch(e){}}
@@ -484,7 +505,7 @@
   }
   function fillContact(){try{var c=JSON.parse(localStorage.getItem('ava_req')||'{}');if(c.nm)document.getElementById('reqname').value=c.nm;if(c.email)document.getElementById('reqemail').value=c.email;if(c.phone)document.getElementById('reqphone').value=c.phone;}catch(e){}}
 
-  loadTools();loadTeam();renderList();pickWho('ava');fillContact();
+  loadTools();loadTeam();renderList();renderIntroTools();pickWho('ava');fillContact();
 </script>
 </body>
 </html>
