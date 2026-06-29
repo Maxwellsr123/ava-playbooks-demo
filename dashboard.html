@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
 <title>Ava — Hunt Mode preview</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.31.0/dist/tabler-icons.min.css" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700;800;900&display=swap" rel="stylesheet" />
 <style>
   :root{
     --bg0:#ffffff; --bg1:#f0eee6; --bg2:#faf9f5;
@@ -65,6 +68,69 @@
   .tile .ic{height:48px; border-radius:12px; background:var(--bg1); display:flex; align-items:center; justify-content:center; font-size:21px;}
   .tile .tt{font-size:10px; margin-top:4px;}
   .seg{display:flex; height:10px; border-radius:5px; overflow:hidden; margin:8px 0;}
+
+  /* ============================================================
+     NEW LOOK — blueprint / Barlow / orange (overrides above) +
+     responsive desktop. Phone-first; desktop adds a sidebar canvas.
+     ============================================================ */
+  :root{
+    --bg0:#FAF8F4; --bg1:#EFEAE0; --bg2:#F4F1EA;
+    --info-bg:#FCE2D2; --warn-bg:#FFF2CC; --purple-bg:#E9E7FB; --coral-bg:#F7E6DE; --green-bg:#E2F1EA; --danger-bg:#FBE7E7;
+    --t0:#1A1A1A; --t1:#56544F; --t2:#8A877F;
+    --info:#F26A21; --info-d:#D2530F; --yellow:#FFC400; --warn:#8a6a00; --purple:#534ab7; --coral:#993c1d; --green:#0f6e56; --danger:#a32d2d;
+    --amber:#D2530F; --red:#a32d2d; --pur:#534ab7;
+    --bd:rgba(26,26,26,0.16); --bd2:rgba(26,26,26,0.34);
+    --font:'Barlow',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+    --head:'Barlow Condensed','Barlow',sans-serif;
+    --grid:repeating-linear-gradient(0deg,transparent 0 39px,rgba(40,80,140,.05) 39px 40px),repeating-linear-gradient(90deg,transparent 0 39px,rgba(40,80,140,.05) 39px 40px);
+  }
+  *{border-radius:0 !important;}
+  body{background:#1A1A1A;font-family:var(--font);font-weight:400;}
+  .phone{background:var(--bg0);background-image:var(--grid);box-shadow:0 0 0 1px #1A1A1A;}
+  @media(min-width:480px){.phone{box-shadow:0 12px 50px rgba(0,0,0,.55),0 0 0 2px #1A1A1A;}}
+  .h{font-family:var(--head);font-weight:900;text-transform:uppercase;letter-spacing:.2px;line-height:.95;font-size:23px;}
+  .lbl{display:inline-block;font-family:var(--head);font-size:13px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:#1A1A1A;background:var(--yellow);padding:3px 10px;margin:0 0 11px;transform:rotate(-1deg);}
+  .lbl .chip,.lbl .muted{transform:rotate(1deg);}
+  .card{background:var(--bg0);border:1.5px solid var(--t0);}
+  .btn{font-family:var(--head);font-weight:700;text-transform:uppercase;letter-spacing:.4px;font-size:14px;padding:9px 13px;border:1.5px solid var(--t0);background:var(--bg0);color:var(--t0);}
+  .btn:active{transform:translate(1px,1px);}
+  .btn.pri{background:var(--info);color:#fff;border-color:var(--t0);box-shadow:3px 3px 0 #1A1A1A;}
+  .btn.sm{font-size:12px;padding:6px 10px;}
+  .chip{font-family:var(--head);font-weight:700;text-transform:uppercase;letter-spacing:.3px;font-size:11px;padding:4px 10px;background:var(--bg1);border:1px solid var(--bd);}
+  .who{font-family:var(--head);font-weight:700;text-transform:uppercase;letter-spacing:.3px;font-size:10px;padding:3px 7px;}
+  .who.ava{background:var(--info);color:#fff;} .who.you{background:#1A1A1A;color:#fff;}
+  .who.crew{background:var(--bg1);color:var(--t1);border:1px solid var(--bd);} .who.looper{background:var(--purple);color:#fff;} .who.browser{background:var(--coral);color:#fff;}
+  .pick{font-family:var(--head);font-weight:600;text-transform:uppercase;letter-spacing:.3px;border:1.5px solid var(--t0);color:var(--t0);background:var(--bg0);}
+  .pick.sel{background:var(--t0);color:#fff;}
+  .header{background:#1A1A1A;color:#fff;}
+  .badge{font-family:var(--head);font-weight:700;text-transform:uppercase;letter-spacing:.4px;font-size:10px;padding:3px 8px;background:var(--info);color:#fff;}
+  .nav{border-top:1.5px solid var(--t0);background:var(--bg0);position:sticky;bottom:0;}
+  .nav button{font-family:var(--head);font-weight:700;text-transform:uppercase;letter-spacing:.3px;color:var(--t2);}
+  .nav button.act{color:var(--info);}
+  .fab button{background:var(--info);border:1.5px solid var(--t0);color:#fff;box-shadow:3px 3px 0 #1A1A1A;}
+  .ava-card{background:var(--bg1);border:1.5px solid var(--t0);}
+  .badge,.chip,.who,.btn,.pick{border-radius:0 !important;}
+  input.ti-input{border:1.5px solid var(--t0);background:var(--bg0);}
+  .tile .ic{background:var(--bg1);border:1.5px solid var(--t0);}
+  .tile .tt{font-family:var(--head);font-weight:600;text-transform:uppercase;letter-spacing:.2px;}
+  .seg{height:12px;border:1.5px solid var(--t0);margin:9px 0 14px;}
+  .alert{font-family:var(--head);font-weight:600;text-transform:uppercase;letter-spacing:.4px;background:#1A1A1A;border:2px solid var(--info);}
+
+  /* ---------- DESKTOP: sidebar + wide canvas ---------- */
+  @media(min-width:1000px){
+    body{align-items:center;padding:24px;}
+    .phone{max-width:1080px;width:100%;height:calc(100vh - 48px);min-height:0;margin:0;flex-direction:row;overflow:hidden;}
+    .statusbar{display:none;}
+    .body{flex:1;overflow-y:auto;background-image:var(--grid);}
+    .pad{padding:24px 30px;max-width:780px;}
+    .h{font-size:28px;}
+    .nav{order:-1;flex-direction:column;width:212px;flex:none;border-top:none;border-right:1.5px solid var(--t0);align-items:stretch;padding:16px 0 0;position:static;}
+    .nav button{flex:none;text-align:left;padding:13px 20px;display:flex;align-items:center;gap:12px;font-size:14px;}
+    .nav .navi{font-size:19px;} .nav .navt{font-size:14px;margin-top:0;}
+    .fab{flex:none;justify-content:stretch;padding:6px 16px 14px;}
+    .fab button{width:100%;height:48px;justify-content:flex-start;gap:11px;padding:0 16px;}
+    .fab button::after{content:'Ask Ava';font-family:var(--head);font-weight:800;text-transform:uppercase;letter-spacing:.4px;font-size:15px;}
+  }
 </style>
 </head>
 <body>
