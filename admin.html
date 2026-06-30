@@ -298,14 +298,25 @@ body{font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--ink
   });
   document.getElementById("dfile").addEventListener("change",function(){
     var f=this.files[0];if(!f)return;var p=document.getElementById("dproc");
+    function post(fn,b){return fetch(API+"/"+fn,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(b)}).then(function(r){return r.json();});}
+    function clr(ms){setTimeout(function(){p.textContent="";},ms||8000);}
     p.style.color="var(--ink3)";p.textContent="Ava is reading "+f.name+"…";
     var rd=new FileReader();rd.onload=function(){var b64=String(rd.result).split(",")[1];
-      fetch(API+"/chase-drop",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({company_id:KPA_ID,kind:"bankline",filename:f.name,mime:f.type||"application/octet-stream",file_base64:b64})})
-      .then(function(r){return r.json();}).then(function(d){if(d.error){p.style.color="var(--amb)";p.textContent="Couldn't read that — "+d.error;return;}p.style.color="var(--grn)";p.textContent="✓ Added "+d.count+" line"+(d.count===1?"":"s")+" — Ava is hunting Gmail for receipts…";loadLive();
-        fetch(API+"/chase-hunt",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({company_id:KPA_ID})}).then(function(r){return r.json();}).then(function(h){loadLive();var miss=(h.hunted||0)-(h.found||0);p.textContent="✓ "+d.count+" added · found "+(h.found||0)+" in Gmail · emailing the owner…";
-          fetch(API+"/chase-email",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({company_id:KPA_ID})}).then(function(r){return r.json();}).then(function(m){if(m.sent){p.textContent="✓ Done · found "+(h.found||0)+" · emailed "+m.count+" missing to "+m.to;}else if(m.error&&m.error.indexOf("RESEND")>=0){p.textContent="✓ found "+(h.found||0)+" · "+(m.count||miss)+" ready to email (connect Resend to send)";}else{p.textContent="✓ found "+(h.found||0)+" · "+(m.count||miss)+" to chase";}loadLive();setTimeout(function(){p.textContent="";},9000);}).catch(function(){setTimeout(function(){p.textContent="";},6000);});
-        }).catch(function(){loadLive();});})
-      .catch(function(err){p.style.color="var(--amb)";p.textContent="Network error — "+err;});};
+      post("chase-drop",{company_id:KPA_ID,kind:"bankline",filename:f.name,mime:f.type||"application/octet-stream",file_base64:b64}).then(function(d){
+        if(d.error){p.style.color="var(--amb)";p.textContent="Couldn't read that — "+d.error;return;}
+        p.style.color="var(--grn)";var added=d.count;p.textContent="✓ Added "+added+" line"+(added===1?"":"s")+" — checking what Ava already knows…";loadLive();
+        post("chase-code",{company_id:KPA_ID}).catch(function(){return {};}).then(function(cc){
+          var known=(cc&&cc.auto_coded)||0;loadLive();p.textContent="✓ "+added+" added"+(known?(" · "+known+" already known"):"")+" — hunting Gmail…";
+          return post("chase-hunt",{company_id:KPA_ID});
+        }).then(function(h){loadLive();var found=(h&&h.found)||0;p.textContent="✓ found "+found+" in Gmail · emailing the owner…";
+          return post("chase-email",{company_id:KPA_ID}).then(function(m){
+            if(m.sent){p.textContent="✓ Done · found "+found+" · emailed "+m.count+" to "+m.to;}
+            else if(m.error&&String(m.error).indexOf("RESEND")>=0){p.textContent="✓ found "+found+" · "+(m.count||0)+" ready to email (connect Resend)";}
+            else{p.textContent="✓ found "+found+" · "+(m.count||0)+" to chase";}
+            loadLive();clr(9000);
+          });
+        }).catch(function(){loadLive();clr(6000);});
+      }).catch(function(err){p.style.color="var(--amb)";p.textContent="Network error — "+err;});};
     rd.readAsDataURL(f);this.value="";
   });
   if(isLive())loadLive();else drender();
