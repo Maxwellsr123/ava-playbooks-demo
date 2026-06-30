@@ -97,7 +97,7 @@ body{font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--ink
       <section id="home">
         <div class="hero"><div class="spark"></div>
           <h2>Good morning, Sam</h2>
-          <p>Ava checks your inbox every hour — last sweep 14 minutes ago, 14 receipts sorted. 3 things need a quick answer from you.</p>
+          <p>Ava checks your inbox every hour and sorts your receipts. Anything she still needs from you is in the list below — drop it in and she'll match it up.</p>
         </div>
         <div class="drop" id="udrop">
           <div class="dz"><i class="ti ti-camera-plus"></i></div>
@@ -110,16 +110,12 @@ body{font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--ink
           <span id="uproc" style="display:block;font-size:12.5px;color:var(--ink3);margin-top:11px;min-height:16px"></span>
         </div>
         <div class="grid g3">
-          <div class="card stat"><div class="l"><i class="ti ti-receipt" style="font-size:16px;color:var(--ind)"></i> Sorted this month</div><div class="n">142</div><div class="d">Ava found + coded</div></div>
-          <div class="card stat"><div class="l"><i class="ti ti-circle-check" style="font-size:16px;color:var(--grn)"></i> Ready to reconcile</div><div class="n">14</div><div class="d">receipts attached</div></div>
-          <div class="card stat"><div class="l"><i class="ti ti-bell" style="font-size:16px;color:var(--amb)"></i> Needs you</div><div class="n">3</div><div class="d">quick answers</div></div>
+          <div class="card stat"><div class="l"><i class="ti ti-receipt" style="font-size:16px;color:var(--ind)"></i> Sorted</div><div class="n" id="u_sorted">—</div><div class="d">Ava found + coded</div></div>
+          <div class="card stat"><div class="l"><i class="ti ti-circle-check" style="font-size:16px;color:var(--grn)"></i> Ready</div><div class="n" id="u_ready">—</div><div class="d">receipts attached</div></div>
+          <div class="card stat"><div class="l"><i class="ti ti-bell" style="font-size:16px;color:var(--amb)"></i> Needs a receipt</div><div class="n" id="u_needs">—</div><div class="d">Ava is asking you</div></div>
         </div>
-        <div class="sec">Ava needs a quick answer</div>
-        <div class="card">
-          <div class="row"><div class="ic"><i class="ti ti-gas-station"></i></div><div style="flex:1"><div style="font-weight:500">Z Energy — $96.20</div><div style="font-size:12.5px;color:var(--ink2)">Fuel for a job or the van?</div></div><span class="pill p-warn">answer</span></div>
-          <div class="row"><div class="ic"><i class="ti ti-building-bank"></i></div><div style="flex:1"><div style="font-weight:500">ANZ payment — $1,240</div><div style="font-size:12.5px;color:var(--ink2)">Which account paid this?</div></div><span class="pill p-warn">answer</span></div>
-          <div class="row"><div class="ic"><i class="ti ti-receipt"></i></div><div style="flex:1"><div style="font-weight:500">Bunnings — $210</div><div style="font-size:12.5px;color:var(--ink2)">Can you send the receipt?</div></div><span class="pill p-warn">upload</span></div>
-        </div>
+        <div class="sec">Receipts Ava needs from you</div>
+        <div class="card" id="uneed"><div class="row"><div style="flex:1;color:var(--ink2);font-size:13px">Loading your list…</div></div></div>
       </section>
 
       <section id="receipts" class="hidden">
@@ -201,6 +197,19 @@ body{font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--ink
 
   var FN="https://somgalhkmptkclgvxhca.supabase.co/functions/v1/chase-drop";
   var KPA="5c829c7f-0b63-4bbc-87b9-c24b822a564d";
+  function uMoney(n){return n==null?"":"$"+Math.abs(Number(n)).toLocaleString("en-NZ",{minimumFractionDigits:2,maximumFractionDigits:2});}
+  function loadList(){
+    fetch("https://somgalhkmptkclgvxhca.supabase.co/functions/v1/chase-list?company="+KPA).then(function(r){return r.json();}).then(function(d){
+      var c=d.counts||{};
+      var rd=document.getElementById("u_ready"),nd=document.getElementById("u_needs"),so=document.getElementById("u_sorted");
+      if(rd)rd.textContent=(c.ready||0);if(nd)nd.textContent=(c.chasing||0);if(so)so.textContent=((c.ready||0)+(c.review||0));
+      var need=(d.items||[]).filter(function(i){return i.bucket==="chasing";});
+      var box=document.getElementById("uneed");if(!box)return;
+      if(!need.length){box.innerHTML='<div class="row"><div style="flex:1;color:var(--grn);font-size:13px"><i class="ti ti-circle-check" style="vertical-align:-2px"></i> All caught up — nothing to send right now.</div></div>';return;}
+      box.innerHTML=need.slice(0,25).map(function(i){return '<div class="row"><div class="ic"><i class="ti ti-receipt"></i></div><div style="flex:1"><div style="font-weight:500">'+(i.supplier||"—")+(i.amount!=null?(" — "+uMoney(i.amount)):"")+'</div><div style="font-size:12.5px;color:var(--ink2)">'+(i.date||"")+(i.account?(" · "+i.account):"")+'</div></div><span class="pill p-warn">send receipt</span></div>';}).join("");
+    }).catch(function(){});
+  }
+  loadList();
   var ukind="receipt";
   document.querySelectorAll("[data-kind]").forEach(function(b){b.addEventListener("click",function(e){e.stopPropagation();ukind=this.getAttribute("data-kind");document.getElementById("ufile").click();});});
   document.getElementById("ufile").addEventListener("change",function(){
@@ -214,7 +223,7 @@ body{font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--ink
           if(d.error){p.style.color="var(--amb)";p.textContent="Couldn't read that — "+d.error;return;}
           var it=(d.items&&d.items[0])||{};
           p.style.color="var(--grn)";
-          p.textContent="✓ "+(d.count>1?(d.count+" items — "):"")+(it.supplier||"Read it")+(it.amount?(" · $"+it.amount):"")+(it.gst?(" · GST $"+it.gst):"")+(it.date?(" · "+it.date):"")+" — "+(d.matched?"matched to a spend":"added");
+          p.textContent="✓ "+(d.count>1?(d.count+" items — "):"")+(it.supplier||"Read it")+(it.amount?(" · $"+it.amount):"")+(it.gst?(" · GST $"+it.gst):"")+(it.date?(" · "+it.date):"")+" — "+(d.matched?"matched to a spend":"added");loadList();
         }).catch(function(err){p.style.color="var(--amb)";p.textContent="Network error — "+err;});
     };
     rd.readAsDataURL(f);this.value="";
