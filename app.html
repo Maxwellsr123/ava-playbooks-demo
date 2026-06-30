@@ -110,11 +110,11 @@ body{font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--ink
           <span id="uproc" style="display:block;font-size:12.5px;color:var(--ink3);margin-top:11px;min-height:16px"></span>
         </div>
         <div class="grid g3">
-          <div class="card stat"><div class="l"><i class="ti ti-receipt" style="font-size:16px;color:var(--ind)"></i> Sorted</div><div class="n" id="u_sorted">—</div><div class="d">Ava found + coded</div></div>
-          <div class="card stat"><div class="l"><i class="ti ti-circle-check" style="font-size:16px;color:var(--grn)"></i> Ready</div><div class="n" id="u_ready">—</div><div class="d">receipts attached</div></div>
-          <div class="card stat"><div class="l"><i class="ti ti-bell" style="font-size:16px;color:var(--amb)"></i> Needs a receipt</div><div class="n" id="u_needs">—</div><div class="d">Ava is asking you</div></div>
+          <div class="card stat ufilt" data-filter="sorted" style="cursor:pointer"><div class="l"><i class="ti ti-receipt" style="font-size:16px;color:var(--ind)"></i> Sorted</div><div class="n" id="u_sorted">—</div><div class="d">Ava found + coded</div></div>
+          <div class="card stat ufilt" data-filter="ready" style="cursor:pointer"><div class="l"><i class="ti ti-circle-check" style="font-size:16px;color:var(--grn)"></i> Ready</div><div class="n" id="u_ready">—</div><div class="d">receipts attached</div></div>
+          <div class="card stat ufilt" data-filter="needs" style="cursor:pointer"><div class="l"><i class="ti ti-bell" style="font-size:16px;color:var(--amb)"></i> Needs a receipt</div><div class="n" id="u_needs">—</div><div class="d">Ava is asking you</div></div>
         </div>
-        <div class="sec">Receipts Ava needs from you</div>
+        <div class="sec" id="usechead">Receipts Ava needs from you</div>
         <div class="card" id="uneed"><div class="row"><div style="flex:1;color:var(--ink2);font-size:13px">Loading your list…</div></div></div>
       </section>
 
@@ -194,20 +194,29 @@ body{font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--ink
   var FN="https://somgalhkmptkclgvxhca.supabase.co/functions/v1/chase-drop";
   var KPA="5c829c7f-0b63-4bbc-87b9-c24b822a564d";
   function uMoney(n){return n==null?"":"$"+Math.abs(Number(n)).toLocaleString("en-NZ",{minimumFractionDigits:2,maximumFractionDigits:2});}
+  var U_ITEMS=[],U_FILTER="needs";
+  function needRow(i){return '<div class="row"><div class="ic"><i class="ti ti-receipt"></i></div><div style="flex:1"><div style="font-weight:500">'+(i.supplier||"—")+(i.amount!=null?(" — "+uMoney(i.amount)):"")+'</div><div style="font-size:12.5px;color:var(--ink2)">'+(i.date||"")+(i.account?(" · "+i.account):"")+'</div></div><span class="pill p-warn">send receipt</span></div>';}
+  function doneRow(i){var fl=i.flagged;var lbl=fl?(i.note||"flagged — needs a look"):(i.bucket==="ready"?(i.known?"coded · no receipt needed":"receipt attached"):"receipt found");var pl=fl?'<span class="pill p-warn">flagged</span>':(i.bucket==="ready"?'<span class="pill p-ok">done</span>':'<span class="pill p-ind">review</span>');var rc=i.receipt_url?'<a href="'+i.receipt_url+'" target="_blank" style="font-size:12px;color:var(--ind);text-decoration:none;margin-right:10px;white-space:nowrap">View ↗</a>':'';var ic=fl?'ti-alert-triangle':'ti-circle-check';var icc=fl?'#d98a00':'var(--grn)';return '<div class="row"><div class="ic"><i class="ti '+ic+'" style="color:'+icc+'"></i></div><div style="flex:1"><div style="font-weight:500">'+(i.supplier||"—")+(i.amount!=null?(" — "+uMoney(i.amount)):"")+'</div><div style="font-size:12.5px;color:'+(fl?'#9a6700':'var(--ink2)')+'">'+lbl+(!fl&&i.account?(" · "+i.account):"")+'</div></div>'+rc+pl+'</div>';}
+  function renderHome(){
+    var box=document.getElementById("uneed"),head=document.getElementById("usechead");if(!box)return;
+    var f=U_FILTER,list,htxt,row,empty;
+    if(f==="ready"){list=U_ITEMS.filter(function(i){return i.bucket==="ready";});htxt="Ready — receipts attached";row=doneRow;empty="Nothing ready yet.";}
+    else if(f==="sorted"){list=U_ITEMS.filter(function(i){return i.bucket==="ready"||i.bucket==="review";});htxt="Sorted by Ava";row=doneRow;empty="Nothing sorted yet — Ava is on it.";}
+    else{list=U_ITEMS.filter(function(i){return i.bucket==="chasing";});htxt="Receipts Ava needs from you";row=needRow;empty='<i class="ti ti-circle-check" style="vertical-align:-2px"></i> All caught up — nothing to send right now.';}
+    if(head)head.textContent=htxt;
+    box.innerHTML=list.length?list.slice(0,60).map(row).join(""):'<div class="row"><div style="flex:1;color:var(--ink2);font-size:13px">'+empty+'</div></div>';
+    document.querySelectorAll(".ufilt").forEach(function(el){el.style.outline=el.getAttribute("data-filter")===f?"2px solid var(--ind)":"none";el.style.outlineOffset="-1px";});
+  }
+  function renderDone(){var db=document.getElementById("udone");if(!db)return;var done=U_ITEMS.filter(function(i){return i.bucket==="ready"||i.bucket==="review";});db.innerHTML=done.length?done.slice(0,40).map(doneRow).join(""):'<div class="row"><div style="flex:1;color:var(--ink2);font-size:13px">Nothing sorted yet — Ava is on it.</div></div>';}
   function loadList(){
     fetch("https://somgalhkmptkclgvxhca.supabase.co/functions/v1/chase-list?company="+KPA).then(function(r){return r.json();}).then(function(d){
       var c=d.counts||{};
       var rd=document.getElementById("u_ready"),nd=document.getElementById("u_needs"),so=document.getElementById("u_sorted");
       if(rd)rd.textContent=(c.ready||0);if(nd)nd.textContent=(c.chasing||0);if(so)so.textContent=((c.ready||0)+(c.review||0));
-      var items=d.items||[];
-      var need=items.filter(function(i){return i.bucket==="chasing";});
-      var box=document.getElementById("uneed");
-      if(box){box.innerHTML=need.length?need.slice(0,25).map(function(i){return '<div class="row"><div class="ic"><i class="ti ti-receipt"></i></div><div style="flex:1"><div style="font-weight:500">'+(i.supplier||"—")+(i.amount!=null?(" — "+uMoney(i.amount)):"")+'</div><div style="font-size:12.5px;color:var(--ink2)">'+(i.date||"")+(i.account?(" · "+i.account):"")+'</div></div><span class="pill p-warn">send receipt</span></div>';}).join(""):'<div class="row"><div style="flex:1;color:var(--grn);font-size:13px"><i class="ti ti-circle-check" style="vertical-align:-2px"></i> All caught up — nothing to send right now.</div></div>';}
-      var done=items.filter(function(i){return i.bucket==="ready"||i.bucket==="review";});
-      var db=document.getElementById("udone");
-      if(db){db.innerHTML=done.length?done.slice(0,40).map(function(i){var fl=i.flagged;var lbl=fl?(i.note||"flagged — needs a look"):(i.bucket==="ready"?(i.known?"coded · no receipt needed":"receipt attached"):"receipt found");var pl=fl?'<span class="pill p-warn">flagged</span>':(i.bucket==="ready"?'<span class="pill p-ok">done</span>':'<span class="pill p-ind">review</span>');var rc=i.receipt_url?'<a href="'+i.receipt_url+'" target="_blank" style="font-size:12px;color:var(--ind);text-decoration:none;margin-right:10px;white-space:nowrap">View ↗</a>':'';var ic=fl?'ti-alert-triangle':'ti-circle-check';var icc=fl?'#d98a00':'var(--grn)';return '<div class="row"><div class="ic"><i class="ti '+ic+'" style="color:'+icc+'"></i></div><div style="flex:1"><div style="font-weight:500">'+(i.supplier||"—")+(i.amount!=null?(" — "+uMoney(i.amount)):"")+'</div><div style="font-size:12.5px;color:'+(fl?'#9a6700':'var(--ink2)')+'">'+lbl+(!fl&&i.account?(" · "+i.account):"")+'</div></div>'+rc+pl+'</div>';}).join(""):'<div class="row"><div style="flex:1;color:var(--ink2);font-size:13px">Nothing sorted yet — Ava is on it.</div></div>';}
+      U_ITEMS=d.items||[];renderHome();renderDone();
     }).catch(function(){});
   }
+  document.querySelectorAll(".ufilt").forEach(function(el){el.addEventListener("click",function(){U_FILTER=this.getAttribute("data-filter");renderHome();});});
   loadList();
   var ukind="receipt";
   document.querySelectorAll("[data-kind]").forEach(function(b){b.addEventListener("click",function(e){e.stopPropagation();ukind=this.getAttribute("data-kind");document.getElementById("ufile").click();});});
