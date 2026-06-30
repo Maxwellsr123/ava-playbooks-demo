@@ -225,7 +225,7 @@ body{font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--ink
   var API="https://somgalhkmptkclgvxhca.supabase.co/functions/v1";
   var KPA_ID="5c829c7f-0b63-4bbc-87b9-c24b822a564d";
   var dcid={KPA:KPA_ID,Moods:null,Bosch:null,Nexus:null};
-  var dcur="KPA",dsel=null,dnid=200,live=[],lc={review:0,chasing:0,ready:0},lload=false;
+  var dcur="KPA",dsel=null,dnid=200,live=[],lc={review:0,chasing:0,ready:0},lload=false,dfilter=null;
   var dd={
     Moods:[{id:1,sup:"Mico Plumbing",amt:"284.50",date:"18 Jun",gmail:"found",gst:"37.11",code:"Materials",job:"#468",st:"review"},
       {id:2,sup:"Z Energy",amt:"96.20",date:"20 Jun",gmail:"missing",find:false,q:"Fuel for a job or the van? And GST?",st:"missing"}],
@@ -257,15 +257,17 @@ body{font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--ink
     var rev,ch,rd;
     if(isLive()){rev=lc.review;ch=lc.chasing;rd=lc.ready;}
     else{var it=dd[dcur];rev=it.filter(function(x){return x.st==="review"}).length;ch=it.filter(function(x){return x.st==="missing"||x.st==="chasing"}).length;rd=it.filter(function(x){return x.st==="ready"}).length;}
-    var c=function(l,n,col){return '<div class="card stat"><div class="l">'+l+'</div><div class="n" style="color:'+col+'">'+n+'</div></div>';};
-    document.getElementById("dtally").innerHTML=c("To review",rev,"var(--ink)")+c("Chasing",ch,"var(--amb)")+c("Ready",rd,"var(--grn)");
+    var c=function(l,n,col,bk){var on=dfilter===bk;return '<div class="card stat" data-bk="'+bk+'" style="cursor:pointer;'+(on?"outline:2px solid var(--ind);outline-offset:-1px;":"")+'"><div class="l">'+l+'</div><div class="n" style="color:'+col+'">'+n+'</div></div>';};
+    document.getElementById("dtally").innerHTML=c("To review",rev,"var(--ink)","review")+c("Chasing",ch,"var(--amb)","chasing")+c("Ready",rd,"var(--grn)","ready");
   }
   function dqueue(){
     var box=document.getElementById("dqueue");
     if(isLive()){
       if(lload){box.innerHTML='<div style="padding:18px;text-align:center;color:var(--ink3);font-size:13px">Loading KPA’s live queue…</div>';return;}
       if(!live.length){box.innerHTML='<div style="padding:18px;text-align:center;color:var(--ink3);font-size:13px">Queue empty. Drop a Xero screenshot to add one.</div>';return;}
-      box.innerHTML=live.map(function(it){
+      var arr=dfilter?live.filter(function(it){return it.bucket===dfilter;}):live;
+      if(!arr.length){box.innerHTML='<div style="padding:18px;text-align:center;color:var(--ink3);font-size:13px">Nothing in this view — tap the card again to clear the filter.</div>';return;}
+      box.innerHTML=arr.map(function(it){
         var open=(""+dsel)===(""+it.id);
         var amt=it.amount!=null?(" — $"+it.amount):"";
         var head='<div class="qhead" data-dr="'+it.id+'"><div class="thumb"><i class="ti '+(it.dropped?"ti-photo":(it.bucket==="ready"?"ti-paperclip":"ti-mail-search"))+'"></i></div><div style="flex:1;min-width:0"><div style="font-weight:500;font-size:13.5px">'+it.supplier+amt+'</div><div style="font-size:12px;color:var(--ink3)">'+(it.date||"")+(it.dropped?" · dropped":"")+'</div></div>'+dpill(it.bucket)+'<i class="ti ti-chevron-'+(open?"up":"down")+'" style="font-size:16px;color:var(--ink3)"></i></div>';
@@ -284,7 +286,8 @@ body{font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--ink
   }
   function drender(){dtally();dqueue();}
   function loadLive(){if(!isLive())return;lload=true;drender();fetch(API+"/chase-list?company="+KPA_ID).then(function(r){return r.json();}).then(function(d){live=d.items||[];lc=d.counts||lc;lload=false;drender();}).catch(function(){lload=false;drender();});}
-  document.getElementById("dclient").addEventListener("click",function(e){if(e.target.tagName!=="BUTTON")return;this.querySelectorAll("button").forEach(function(x){x.classList.remove("on")});e.target.classList.add("on");dcur=e.target.getAttribute("data-d");dsel=null;if(isLive())loadLive();else drender();});
+  document.getElementById("dclient").addEventListener("click",function(e){if(e.target.tagName!=="BUTTON")return;this.querySelectorAll("button").forEach(function(x){x.classList.remove("on")});e.target.classList.add("on");dcur=e.target.getAttribute("data-d");dsel=null;dfilter=null;if(isLive())loadLive();else drender();});
+  document.getElementById("dtally").addEventListener("click",function(e){var c=e.target.closest("[data-bk]");if(!c)return;var bk=c.getAttribute("data-bk");dfilter=(dfilter===bk)?null:bk;dsel=null;drender();});
   document.getElementById("dqueue").addEventListener("click",function(e){
     var b=e.target.closest("[data-da]");
     if(b&&!isLive()){var x=dd[dcur].find(function(y){return y.id===+b.getAttribute("data-id")}),a=b.getAttribute("data-da");if(a==="ready")x.st="ready";else if(a==="ask")x.st="chasing";drender();return;}
