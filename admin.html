@@ -250,7 +250,7 @@ body{font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--ink
     return '<div style="font-size:12.5px;color:var(--grn);line-height:1.6"><i class="ti ti-circle-check"></i> Ava attached the receipt. Reconcile in Xero.</div>';
   }
   function ldetail(it){
-    var src=it.bucket==="ready"?'<i class="ti ti-check" style="color:var(--grn)"></i> '+(it.source==="gmail"?"receipt found in Gmail and attached":"attached"):(it.dropped?'<i class="ti ti-photo" style="color:var(--ind)"></i> dropped screenshot — Ava read it; hunting for the matching receipt':'<i class="ti ti-mail-search" style="color:var(--amb)"></i> no receipt yet — Ava sweeps Gmail hourly and will chase the owner');
+    var src=it.flagged?'<i class="ti ti-alert-triangle" style="color:var(--amb)"></i> Ava found a likely receipt but something’s off — please check before reconciling':(it.bucket==="ready"?'<i class="ti ti-check" style="color:var(--grn)"></i> '+(it.source==="gmail"?"receipt found in Gmail and attached":"attached"):(it.dropped?'<i class="ti ti-photo" style="color:var(--ind)"></i> dropped screenshot — Ava read it; hunting for the matching receipt':'<i class="ti ti-mail-search" style="color:var(--amb)"></i> no receipt yet — Ava sweeps Gmail hourly and will chase the owner'));
     var rcpt=it.receipt_url?'<div style="margin-top:9px"><a href="'+it.receipt_url+'" target="_blank" style="display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:500;color:var(--ind);text-decoration:none"><i class="ti ti-file-text" style="font-size:15px"></i> Open receipt ↗</a></div>':'';
     return '<div style="font-size:12.5px;color:var(--ink2);line-height:1.7">'+src+(it.note?(' · <span style="color:var(--ink3)">'+it.note+'</span>'):'')+'</div>'+rcpt+'<div style="font-size:11px;color:var(--ink3);margin-top:8px"><i class="ti ti-lock" style="font-size:12px"></i> Managed by Ava — reconcile in Xero. Ava never reconciles.</div>';
   }
@@ -271,7 +271,7 @@ body{font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--ink
       box.innerHTML=arr.map(function(it){
         var open=(""+dsel)===(""+it.id);
         var amt=it.amount!=null?(" — $"+it.amount):"";
-        var head='<div class="qhead" data-dr="'+it.id+'"><div class="thumb"><i class="ti '+(it.dropped?"ti-photo":(it.bucket==="ready"?"ti-paperclip":"ti-mail-search"))+'"></i></div><div style="flex:1;min-width:0"><div style="font-weight:500;font-size:13.5px">'+it.supplier+amt+'</div><div style="font-size:12px;color:var(--ink3)">'+(it.date||"")+(it.dropped?" · dropped":"")+'</div></div>'+dpill(it.bucket)+'<i class="ti ti-chevron-'+(open?"up":"down")+'" style="font-size:16px;color:var(--ink3)"></i></div>';
+        var head='<div class="qhead" data-dr="'+it.id+'"><div class="thumb"><i class="ti '+(it.flagged?"ti-alert-triangle":(it.dropped?"ti-photo":(it.bucket==="ready"?"ti-paperclip":"ti-mail-search")))+'"></i></div><div style="flex:1;min-width:0"><div style="font-weight:500;font-size:13.5px">'+it.supplier+amt+'</div><div style="font-size:12px;color:var(--ink3)">'+(it.date||"")+(it.dropped?" · dropped":"")+'</div></div>'+(it.flagged?'<span class="pill p-warn">flagged</span>':dpill(it.bucket))+'<i class="ti ti-chevron-'+(open?"up":"down")+'" style="font-size:16px;color:var(--ink3)"></i></div>';
         var body=open?'<div style="padding:0 14px 13px;border-top:1px solid var(--line);margin-top:1px;padding-top:11px">'+ldetail(it)+'</div>':'';
         return '<div class="qcard">'+head+body+'</div>';
       }).join("");
