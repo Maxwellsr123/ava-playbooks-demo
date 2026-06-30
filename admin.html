@@ -306,7 +306,7 @@ body{font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--ink
         if(d.error){p.style.color="var(--amb)";p.textContent="Couldn't read that — "+d.error;return;}
         p.style.color="var(--grn)";var added=d.count;p.textContent="✓ Added "+added+" line"+(added===1?"":"s")+" — checking what Ava already knows…";loadLive();
         post("chase-code",{company_id:KPA_ID}).catch(function(){return {};}).then(function(cc){
-          var known=(cc&&cc.auto_coded)||0;loadLive();p.textContent="✓ "+added+" added"+(known?(" · "+known+" already known"):"")+" — hunting Gmail…";
+          var personal=(cc&&cc.auto_coded)||0,coded=(cc&&cc.known_coded_still_chased)||0;loadLive();p.textContent="✓ "+added+" added"+(personal?(" · "+personal+" personal (no receipt)"):"")+(coded?(" · "+coded+" auto-coded"):"")+" — hunting Gmail…";
           return post("chase-hunt",{company_id:KPA_ID});
         }).then(function(h){loadLive();var found=(h&&h.found)||0;p.textContent="✓ found "+found+" in Gmail · emailing the owner…";
           return post("chase-email",{company_id:KPA_ID}).then(function(m){
